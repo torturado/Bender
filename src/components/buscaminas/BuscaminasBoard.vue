@@ -1,0 +1,94 @@
+<script setup>
+import { computed } from 'vue'
+
+const props = defineProps({
+  size: { type: Number, required: true },
+  numbers: { type: Array, required: true }, // -1 = mina (vacío hasta colocar)
+  mines: { type: Array, required: true },
+  revealed: { type: Array, required: true },
+  flagged: { type: Array, required: true },
+  minesPlaced: { type: Boolean, default: false },
+  status: { type: String, default: 'playing' }, // playing | lost | won
+  exploded: { type: Object, default: null }, // { r, c } o null
+  wrongFlags: { type: Object, default: () => new Set() }, // Set "r,c"
+})
+
+const emit = defineEmits(['cell-click', 'cell-flag'])
+
+const interactive = computed(() => props.status === 'playing')
+
+// Colores clásicos de números adaptados al tema oscuro.
+const NUMBER_CLASSES = {
+  1: 'text-sky-400',
+  2: 'text-green-400',
+  3: 'text-red-400',
+  4: 'text-violet-400',
+  5: 'text-amber-400',
+  6: 'text-teal-300',
+  7: 'text-white',
+  8: 'text-mist-400',
+}
+
+function showMine(r, c) {
+  if (!props.minesPlaced) return false
+  if (props.status !== 'lost') return false
+  return props.mines[r][c]
+}
+
+function cellContent(r, c) {
+  if (props.revealed[r][c]) {
+    if (props.minesPlaced && props.mines[r][c]) return 'mine'
+    return props.numbers[r][c] === 0 ? 'empty' : 'number'
+  }
+  if (props.flagged[r][c]) return props.wrongFlags.has(`${r},${c}`) ? 'wrong-flag' : 'flag'
+  if (showMine(r, c)) return 'mine'
+  return 'hidden'
+}
+</script>
+
+<template>
+  <div
+    class="mx-auto grid w-full gap-1"
+    :class="size >= 12 ? 'max-w-[560px]' : 'max-w-[440px]'"
+    :style="{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }"
+    role="grid"
+    aria-label="Tablero de Buscaminas"
+  >
+    <template v-for="r in size" :key="'row-' + r">
+      <button
+        v-for="c in size"
+        :key="'cell-' + r + '-' + c"
+        type="button"
+        role="gridcell"
+        :aria-label="`Fila ${r}, columna ${c}`"
+        :aria-disabled="!interactive"
+        :class="[
+          'flex aspect-square items-center justify-center rounded border text-base font-extrabold transition select-none',
+          size >= 12 ? 'sm:text-lg' : 'sm:text-xl',
+          cellContent(r - 1, c - 1) === 'hidden'
+            ? 'border-ink-500 bg-ink-900 hover:border-orange-400'
+            : cellContent(r - 1, c - 1) === 'wrong-flag'
+              ? 'border-red-500 bg-red-500/15'
+              : exploded && exploded.r === r - 1 && exploded.c === c - 1
+                ? 'border-red-500 bg-red-600'
+                : 'cursor-default border-ink-600 bg-ink-950',
+          !interactive ? 'hover:border-ink-500' : '',
+        ]"
+        @click="emit('cell-click', { r: r - 1, c: c - 1 })"
+        @contextmenu.prevent="emit('cell-flag', { r: r - 1, c: c - 1 })"
+      >
+        <span v-if="cellContent(r - 1, c - 1) === 'mine'" class="leading-none">💣</span>
+        <span
+          v-else-if="cellContent(r - 1, c - 1) === 'number'"
+          class="leading-none"
+          :class="NUMBER_CLASSES[numbers[r - 1][c - 1]]"
+          >{{ numbers[r - 1][c - 1] }}</span
+        >
+        <span v-else-if="cellContent(r - 1, c - 1) === 'flag'" class="leading-none">🚩</span>
+        <span v-else-if="cellContent(r - 1, c - 1) === 'wrong-flag'" class="leading-none"
+          >🚩<span class="text-red-400">✕</span></span
+        >
+      </button>
+    </template>
+  </div>
+</template>

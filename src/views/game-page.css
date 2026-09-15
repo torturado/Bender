@@ -1,0 +1,74 @@
+/* Estilos compartidos por las 4 vistas de juego.
+   Mantienen la API de clases (.game-page, .back, ...) pero usan
+   los tokens del tema Tailwind definidos en src/style.css
+   para no duplicar hex. Los juegos nuevos deberían usar
+   utilidades Tailwind directamente en el template. */
+.game-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.back {
+  display: inline-block;
+  color: var(--color-orange-400, #fb923c);
+  text-decoration: none;
+  font-weight: 600;
+  margin-bottom: 1.2rem;
+}
+
+.back:hover {
+  text-decoration: underline;
+}
+
+.game-header {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.8rem;
+  border-radius: 8px;
+  border: 2px solid #fff;
+  color: #fff;
+  margin-bottom: 1.5rem;
+}
+
+.game-header h1 {
+  margin: 0 0 0.2rem;
+  font-size: 2rem;
+}
+
+.game-header p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+.monogram {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  height: 64px;
+  padding: 0 0.6rem;
+  font-weight: 800;
+  font-size: 1.2rem;
+  background: rgba(0, 0, 0, 0.35);
+  border: 2px solid var(--color-orange-300, #fdba74);
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.placeholder {
+  border: 2px dashed var(--color-ink-500, #2c334d);
+  border-radius: 8px;
+  padding: 3rem 2rem;
+  text-align: center;
+  color: var(--color-mist-400, #8b90a7);
+  background: var(--color-ink-900, #121627);
+}
+
+.placeholder-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-mist-200, #c9cede);
+  margin: 0 0 0.5rem;
+}

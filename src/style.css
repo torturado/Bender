@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+
+  /* Fondo base de la app (antes #0a0c14 hardcodeado) */
+  --color-ink-950: #0a0c14;
+  --color-ink-900: #121627;
+  --color-ink-800: #1c2135;
+  --color-ink-700: #22263a;
+  --color-ink-600: #1e2438;
+  --color-ink-500: #2c334d;
+
+  /* Grises de texto (antes #5b6178, #8b90a7, etc.) */
+  --color-mist-500: #5b6178;
+  --color-mist-400: #8b90a7;
+  --color-mist-300: #aab0c5;
+  --color-mist-200: #c9cede;
+  --color-mist-100: #e8eaf2;
+}
+
+@layer base {
+  :root {
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    font-weight: 400;
+    color-scheme: dark;
+    color: var(--color-mist-100);
+    background-color: var(--color-ink-950);
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    background:
+      radial-gradient(1000px 400px at 20% -5%, rgba(66, 184, 131, 0.12), transparent),
+      radial-gradient(900px 380px at 85% 0%, rgba(100, 108, 255, 0.12), transparent),
+      var(--color-ink-950);
+  }
+
+  #app {
+    min-height: 100vh;
+  }
+
+  h1,
+  h2,
+  h3 {
+    line-height: 1.15;
+  }
+
+  /* Foco visible para navegación por teclado */
+  :focus-visible {
+    outline: 2px solid var(--color-orange-400, #fb923c);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
