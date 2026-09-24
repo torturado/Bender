@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Bender Juegos</string>
+    <string name="title_activity_main">Bender Juegos</string>
+    <string name="package_name">es.bender.juegos</string>
+    <string name="custom_url_scheme">es.bender.juegos</string>
+</resources>
