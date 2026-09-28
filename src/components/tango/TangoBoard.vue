@@ -47,8 +47,22 @@ function onCell(r, c) {
 <template>
   <div class="game-board-frame tango-board-frame mx-auto">
     <p class="board-instructions mb-3 text-center text-mist-400">
-      Cada fila y columna lleva {{ half }} ☀ y {{ half }} ☾. Pulsa una casilla:
-      vacío → sol → luna.
+      Cada fila y columna lleva {{ half }}
+      <svg class="inline-icon text-amber-300" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="4.8" fill="currentColor" />
+        <path
+          class="cell-symbol-rays"
+          d="M12 3.4V1.1M12 20.6v2.3M3.4 12H1.1M20.6 12h2.3M5.9 5.9 4.2 4.2M18.1 18.1l1.7 1.7M18.1 5.9l1.7-1.7M5.9 18.1l-1.7 1.7"
+        />
+      </svg>
+      y {{ half }}
+      <svg class="inline-icon text-sky-300" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          fill="currentColor"
+          d="M20.6 14.6A8.9 8.9 0 1 1 9.4 3.4a7.2 7.2 0 0 0 11.2 11.2Z"
+        />
+      </svg>
+      . Pulsa una casilla: vacío → sol → luna.
     </p>
 
     <div
@@ -75,36 +89,68 @@ function onCell(r, c) {
           ]"
           @click="onCell(r - 1, c - 1)"
         >
-            <span
+            <svg
               v-if="board[r - 1][c - 1] === SUN"
-              class="cell-symbol anim-pop leading-none text-amber-300"
-              >☀</span
+              class="cell-symbol anim-pop text-amber-300"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
             >
-            <span
+              <circle cx="12" cy="12" r="4.8" fill="currentColor" />
+              <path
+                class="cell-symbol-rays"
+                d="M12 3.4V1.1M12 20.6v2.3M3.4 12H1.1M20.6 12h2.3M5.9 5.9 4.2 4.2M18.1 18.1l1.7 1.7M18.1 5.9l1.7-1.7M5.9 18.1l-1.7 1.7"
+              />
+            </svg>
+            <svg
               v-else-if="board[r - 1][c - 1] === MOON"
-              class="cell-symbol anim-pop leading-none text-sky-300"
-              >☾</span
+              class="cell-symbol anim-pop text-sky-300"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
             >
+              <path
+                fill="currentColor"
+                d="M20.6 14.6A8.9 8.9 0 1 1 9.4 3.4a7.2 7.2 0 0 0 11.2 11.2Z"
+              />
+              <path
+                class="cell-symbol-glint"
+                d="M17.4 2.6l.7 1.9 1.9.7-1.9.7-.7 1.9-.7-1.9-1.9-.7 1.9-.7Z"
+                fill="currentColor"
+              />
+            </svg>
             <span
               v-if="isError(r - 1, c - 1)"
-              class="cell-error anim-fade-up pointer-events-none absolute top-0.5 right-1 font-black text-red-400"
+              class="cell-error anim-fade-up pointer-events-none absolute top-0 right-0.5 font-black text-red-400"
               aria-hidden="true"
               >✕</span
             >
 
-          <!-- Marcas =/× en el borde derecho / inferior -->
+          <!-- Marcas =/× en el borde derecho / inferior, dibujadas con trazos
+               en vez de glifos: la "=" de una fuente a este tamaño sale con
+               líneas de 1px que desaparecen. -->
           <span
             v-if="edgeMap.get(`${r - 1},${c - 1}`)?.right"
-            class="constraint-marker constraint-marker-right pointer-events-none absolute z-10 flex items-center justify-center rounded-full border border-mist-500 bg-ink-950 font-bold text-mist-200"
+            class="constraint-marker constraint-marker-right pointer-events-none absolute z-10 flex items-center justify-center rounded-full border border-mist-400 bg-ink-950 text-mist-100"
             aria-hidden="true"
-            >{{ edgeMap.get(`${r - 1},${c - 1}`).right === '=' ? '=' : '×' }}</span
           >
+            <svg v-if="edgeMap.get(`${r - 1},${c - 1}`).right === '='" viewBox="0 0 24 24">
+              <path class="constraint-glyph" d="M6.5 9.5h11M6.5 14.5h11" />
+            </svg>
+            <svg v-else viewBox="0 0 24 24">
+              <path class="constraint-glyph" d="M7.5 7.5l9 9M16.5 7.5l-9 9" />
+            </svg>
+          </span>
           <span
             v-if="edgeMap.get(`${r - 1},${c - 1}`)?.down"
-            class="constraint-marker constraint-marker-down pointer-events-none absolute z-10 flex items-center justify-center rounded-full border border-mist-500 bg-ink-950 font-bold text-mist-200"
+            class="constraint-marker constraint-marker-down pointer-events-none absolute z-10 flex items-center justify-center rounded-full border border-mist-400 bg-ink-950 text-mist-100"
             aria-hidden="true"
-            >{{ edgeMap.get(`${r - 1},${c - 1}`).down === '=' ? '=' : '×' }}</span
           >
+            <svg v-if="edgeMap.get(`${r - 1},${c - 1}`).down === '='" viewBox="0 0 24 24">
+              <path class="constraint-glyph" d="M6.5 9.5h11M6.5 14.5h11" />
+            </svg>
+            <svg v-else viewBox="0 0 24 24">
+              <path class="constraint-glyph" d="M7.5 7.5l9 9M16.5 7.5l-9 9" />
+            </svg>
+          </span>
         </button>
       </template>
     </div>
@@ -120,31 +166,70 @@ function onCell(r, c) {
   container-type: inline-size;
 }
 
+/* Los símbolos son SVG, así que el tamaño va en width/height y no en
+   font-size. 44cqw los deja al 44 % de la celda: protagonistas sin
+   llegar a tocar las marcas del borde. */
 .cell-symbol {
-  font-size: clamp(0.75rem, 32cqw, 1.75rem);
-  line-height: 1;
+  width: clamp(1.3rem, 44cqw, 2.5rem);
+  height: clamp(1.3rem, 44cqw, 2.5rem);
+}
+
+/* Los mismos iconos, a tamaño de texto, en la línea de instrucciones. */
+.inline-icon {
+  display: inline-block;
+  width: 1.25em;
+  height: 1.25em;
+  vertical-align: -0.22em;
+}
+
+.cell-symbol-rays,
+.cell-symbol-glint {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+
+.cell-symbol-glint {
+  fill: currentColor;
+  stroke: none;
+  opacity: 0.55;
 }
 
 .cell-error {
-  font-size: clamp(0.5rem, 24cqw, 0.75rem);
+  font-size: clamp(0.75rem, 30cqw, 1.1rem);
   line-height: 1;
 }
 
+/* El círculo crece a 48cqw y el glifo se dibuja con trazo de 2.6 en un
+   viewBox de 24, así que en una marca de 42px son líneas de ~4.5px
+   frente a las de 1px que salían con la fuente. */
 .constraint-marker {
-  width: 42cqw;
-  height: 42cqw;
-  font-size: clamp(0.45rem, 22cqw, 0.7rem);
-  line-height: 1;
+  width: 48cqw;
+  height: 48cqw;
+}
+
+.constraint-marker svg {
+  width: 78%;
+  height: 78%;
+}
+
+.constraint-glyph {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
 }
 
 .constraint-marker-right {
   top: 50%;
-  right: -21cqw;
+  right: -24cqw;
   transform: translateY(-50%);
 }
 
 .constraint-marker-down {
-  bottom: -21cqw;
+  bottom: -24cqw;
   left: 50%;
   transform: translateX(-50%);
 }
