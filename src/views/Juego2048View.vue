@@ -220,6 +220,13 @@ onBeforeUnmount(() => {
 
     <Transition name="phase" mode="out-in">
       <GamePhase v-if="status === 'setup'" variant="setup">
+        <div class="game-header juego2048">
+          <span class="monogram" aria-hidden="true">2048</span>
+          <div>
+            <h1>2048</h1>
+            <p>Desliza y combina hasta 2048.</p>
+          </div>
+        </div>
         <section
           class="mx-auto w-full max-w-xl rounded-lg border border-ink-500 bg-ink-900 p-6 sm:p-8"
         >
@@ -293,4 +300,8 @@ onBeforeUnmount(() => {
 
 <style scoped>
 @import './game-page.css';
+.game-header.juego2048 {
+  background-color: #0c4a6e;
+  border-color: #fb923c;
+}
 </style>

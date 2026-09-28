@@ -254,16 +254,16 @@ function onCellClick({ r, c }) {
 <template>
   <main class="game-page" :class="{ 'game-page--active': status === 'playing' }">
     <RouterLink to="/" class="back">← Volver al menú</RouterLink>
-    <div v-if="status === 'setup'" class="game-header tango">
-      <span class="monogram" aria-hidden="true">T</span>
-      <div>
-        <h1>Tango</h1>
-        <p>Puzzle de lógica por cuadrícula.</p>
-      </div>
-    </div>
 
     <Transition name="phase" mode="out-in">
-      <GamePhase v-if="status === 'setup'">
+      <GamePhase v-if="status === 'setup'" variant="setup">
+        <div class="game-header tango">
+          <span class="monogram" aria-hidden="true">T</span>
+          <div>
+            <h1>Tango</h1>
+            <p>Puzzle de lógica por cuadrícula.</p>
+          </div>
+        </div>
         <TangoSetupMenu @play="startGame" />
       </GamePhase>
 

@@ -128,7 +128,7 @@ onBeforeUnmount(() => {
 
     <aside
       :id="panelId"
-      class="fixed inset-y-0 left-0 z-50 h-dvh w-72 border-r border-ink-700 bg-ink-900 shadow-2xl transition-[width,transform] duration-200 md:sticky md:top-0 md:z-20 md:h-dvh md:translate-x-0 md:shadow-none"
+      class="fixed inset-y-0 left-0 z-50 h-dvh w-72 border-r border-ink-700 bg-ink-900 shadow-2xl transition-[width,translate,transform] duration-200 md:sticky md:top-0 md:z-20 md:h-dvh md:translate-x-0 md:shadow-none"
       :class="[
         isDesktop && !isExpanded ? 'md:w-20' : 'md:w-72',
         !isDesktop && !isMobileOpen ? '-translate-x-full' : 'translate-x-0',

@@ -280,16 +280,16 @@ function onCellFlag({ r, c }) {
 <template>
   <main class="game-page" :class="{ 'game-page--active': status === 'playing' }">
     <RouterLink to="/" class="back">← Volver al menú</RouterLink>
-    <div v-if="status === 'setup'" class="game-header buscaminas">
-      <span class="monogram" aria-hidden="true">B</span>
-      <div>
-        <h1>Buscaminas</h1>
-        <p>Despeja el tablero sin explotar.</p>
-      </div>
-    </div>
 
     <Transition name="phase" mode="out-in">
-      <GamePhase v-if="status === 'setup'">
+      <GamePhase v-if="status === 'setup'" variant="setup">
+        <div class="game-header buscaminas">
+          <span class="monogram" aria-hidden="true">B</span>
+          <div>
+            <h1>Buscaminas</h1>
+            <p>Despeja el tablero sin explotar.</p>
+          </div>
+        </div>
         <BuscaminasSetupMenu @play="startGame" />
       </GamePhase>
 

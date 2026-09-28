@@ -244,6 +244,13 @@ onUnmounted(() => {
 
     <Transition name="phase" mode="out-in">
       <GamePhase v-if="status === 'setup'" variant="setup">
+        <div class="game-header patches">
+          <span class="monogram" aria-hidden="true">P</span>
+          <div>
+            <h1>Patches</h1>
+            <p>Divide el tablero en parches.</p>
+          </div>
+        </div>
         <section
           class="mx-auto w-full max-w-xl rounded-lg border border-ink-500 bg-ink-900 p-6 sm:p-8"
         >
@@ -322,4 +329,8 @@ onUnmounted(() => {
 
 <style scoped>
 @import './game-page.css';
+.game-header.patches {
+  background-color: #5b21b6;
+  border-color: #fb923c;
+}
 </style>
