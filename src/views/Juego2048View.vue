@@ -14,16 +14,51 @@ import {
   canMove,
   hasTarget,
 } from '../games/juego2048/engine.js'
+import { tilesAfterMove, tilesFromBoard } from '../games/juego2048/tiles.js'
 
 const SAVE_KEY = 'bender.2048.save.v1'
+const END_STATUS_DELAY = 700
 
 const status = ref('setup') // setup | playing | won | endless | lost
+const shownStatus = ref('setup')
 const board = ref([])
+const tiles = ref([])
 const score = ref(0)
 const moves = ref(0)
 const history = ref([]) // [{ board, score }]
 const hasUndone = ref(false)
 let saveEnabled = false
+let statusTimer = null
+
+function clearStatusTimer() {
+  if (statusTimer !== null) {
+    clearTimeout(statusTimer)
+    statusTimer = null
+  }
+}
+
+function isActiveStatus(value) {
+  return value === 'playing' || value === 'endless'
+}
+
+function setStatus(nextStatus, delayTerminal = false) {
+  const previousStatus = status.value
+  clearStatusTimer()
+  status.value = nextStatus
+
+  if (
+    delayTerminal &&
+    isActiveStatus(previousStatus) &&
+    (nextStatus === 'won' || nextStatus === 'lost')
+  ) {
+    statusTimer = setTimeout(() => {
+      shownStatus.value = nextStatus
+      statusTimer = null
+    }, END_STATUS_DELAY)
+  } else {
+    shownStatus.value = nextStatus
+  }
+}
 
 function isValidBoard(value) {
   return (
@@ -107,10 +142,12 @@ function restoreGame() {
     }
     status.value = data.status
     board.value = data.board
+    tiles.value = tilesFromBoard(board.value)
     score.value = data.score
     moves.value = data.moves
     history.value = data.history
     hasUndone.value = data.hasUndone === true
+    shownStatus.value = status.value
     saveEnabled = true
   } catch {
     clearSavedGame()
@@ -145,21 +182,24 @@ function applyMove(dir) {
   board.value = res.board
   score.value += res.gained
   moves.value++
-  spawnTile(board.value)
+  const spawned = spawnTile(board.value)
+  tiles.value = tilesAfterMove(tiles.value, res.moves, board.value, spawned)
   if (status.value === 'playing' && hasTarget(board.value, TARGET)) {
-    status.value = 'won'
+    setStatus('won', true)
   } else if (!canMove(board.value)) {
-    status.value = 'lost'
+    setStatus('lost', true)
   }
 }
 
 function resetGame() {
+  clearStatusTimer()
   board.value = newGame()
+  tiles.value = tilesFromBoard(board.value, 'new')
   score.value = 0
   moves.value = 0
   history.value = []
   hasUndone.value = false
-  status.value = 'playing'
+  setStatus('playing')
 }
 
 function startGame() {
@@ -184,12 +224,15 @@ function undo() {
   }
   hasUndone.value = true
   board.value = last.board
+  tiles.value = tilesFromBoard(board.value)
   score.value = last.score
   moves.value = Math.max(0, moves.value - 1)
+  clearStatusTimer()
+  shownStatus.value = status.value
 }
 
 function continueEndless() {
-  status.value = 'endless'
+  setStatus('endless')
 }
 
 function onKeydown(e) {
@@ -204,6 +247,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  clearStatusTimer()
   updateSavedGame()
   window.removeEventListener('keydown', onKeydown)
 })
@@ -213,13 +257,13 @@ onBeforeUnmount(() => {
   <main
     class="game-page"
     :class="{
-      'game-page--active': status === 'playing' || status === 'endless',
+      'game-page--active': shownStatus === 'playing' || shownStatus === 'endless',
     }"
   >
     <RouterLink to="/" class="back">← Volver al menú</RouterLink>
 
     <Transition name="phase" mode="out-in">
-      <GamePhase v-if="status === 'setup'" variant="setup">
+      <GamePhase v-if="shownStatus === 'setup'" variant="setup">
         <div class="game-header juego2048">
           <span class="monogram" aria-hidden="true">2048</span>
           <div>
@@ -259,12 +303,12 @@ onBeforeUnmount(() => {
         </section>
       </GamePhase>
 
-      <GamePhase v-else-if="status === 'playing' || status === 'endless'">
+      <GamePhase v-else-if="shownStatus === 'playing' || shownStatus === 'endless'">
         <p class="mb-4 text-center text-sm text-mist-400">
           Desliza y combina hasta {{ TARGET }}.
-          <span v-if="status === 'endless'" class="font-bold text-amber-300">∞ Modo infinito</span>
+          <span v-if="shownStatus === 'endless'" class="font-bold text-amber-300">∞ Modo infinito</span>
           <span v-else class="sm:hidden"> · desliza para mover</span>
-          <span v-if="status !== 'endless'" class="hidden sm:inline"> · flechas o WASD para mover</span>
+          <span v-if="shownStatus !== 'endless'" class="hidden sm:inline"> · flechas o WASD para mover</span>
         </p>
         <Game2048Toolbar
           :can-undo="history.length > 0 && !hasUndone"
@@ -273,10 +317,10 @@ onBeforeUnmount(() => {
           @restart="restart"
           @undo="undo"
         />
-        <Game2048Board :board="board" @move="applyMove" />
+        <Game2048Board :board="board" :tiles="tiles" @move="applyMove" />
       </GamePhase>
 
-      <GamePhase v-else-if="status === 'won'" variant="won">
+      <GamePhase v-else-if="shownStatus === 'won'" variant="won">
         <Game2048Hero
           kind="win"
           :score="score"

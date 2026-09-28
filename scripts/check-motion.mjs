@@ -143,6 +143,60 @@ await page.waitForTimeout(500)
 ok('el tablero está montado', (await page.locator('button[role="gridcell"]').count()) > 0)
 ok('el setup se fue', (await page.locator('text=Configura tu partida').count()) === 0)
 
+console.log('\nmicro: desplazamiento y fusión en 2048')
+await page.goto(`${BASE}/juegos/2048`, { waitUntil: 'networkidle' })
+await page.evaluate(() => {
+  localStorage.setItem(
+    'bender.2048.save.v1',
+    JSON.stringify({
+      version: 1,
+      status: 'playing',
+      board: [
+        [2, 0, 0, 2],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+      ],
+      score: 0,
+      moves: 0,
+      history: [],
+      hasUndone: false,
+      savedAt: Date.now(),
+    }),
+  )
+})
+await page.reload({ waitUntil: 'networkidle' })
+await page.waitForTimeout(200)
+const tileId2048 = await page.locator('.game-2048-tile[data-r="0"][data-c="3"]').getAttribute('data-tile-id')
+await page.keyboard.press('ArrowLeft')
+const tileTransforms = await page.evaluate(async (id) => {
+  const samples = []
+  for (let i = 0; i < 8; i++) {
+    await new Promise((resolve) => setTimeout(resolve, 15))
+    const tile = document.querySelector(`[data-tile-id="${id}"]`)
+    samples.push(tile ? getComputedStyle(tile).transform : null)
+  }
+  return samples
+}, tileId2048)
+ok(
+  'la ficha del 2048 pasa por posiciones intermedias',
+  new Set(tileTransforms.filter(Boolean)).size > 2,
+  JSON.stringify(tileTransforms),
+)
+const tileAnimations = await page.evaluate(() =>
+  [...document.querySelectorAll('.game-2048-tile-inner')].flatMap((el) =>
+    [...el.getAnimations()].map((animation) => animation.animationName),
+  ),
+)
+ok(
+  'la fusión del 2048 tiene pop',
+  tileAnimations.some((name) => name.includes('tile-merge')),
+  JSON.stringify(tileAnimations),
+)
+await page.waitForTimeout(400)
+await page.goto(`${BASE}/juegos/tango`, { waitUntil: 'networkidle' })
+await page.waitForTimeout(300)
+
 
 console.log('\n7. Diálogo de salida con partida guardada')
 await page.click('aside a[href="/"]')
@@ -169,14 +223,41 @@ ok('y no navega', page.url().includes('/juegos/tango'), page.url())
 
 console.log('\n6. micro: pop al colocar símbolo en Tango')
 await enterGame('/juegos/tango')
+// El símbolo hay que buscarlo DENTRO de la celda pulsada. Con
+// document.querySelector('.cell-symbol') se lee la primera del tablero,
+// que suele ser una celda fija que no ha cambiado: el check pasaba por
+// casualidad y fallaba en cuanto la partida venía restaurada.
 const popSeen = await page.evaluate(async () => {
-  const btn = document.querySelector('button[role="gridcell"]:not([disabled])')
+  const cells = [...document.querySelectorAll('button[role="gridcell"]')]
+  const btn = cells.find((c) => !c.disabled)
   btn.click()
   await new Promise((r) => setTimeout(r, 30))
-  const sym = document.querySelector('.cell-symbol')
+  const sym = btn.querySelector('.cell-symbol')
   return sym ? sym.getAnimations().map((a) => a.animationName) : []
 })
 ok('el símbolo anima al aparecer', popSeen.length > 0, JSON.stringify(popSeen))
+
+// Y que se repita al ciclar sol→luna, no solo al salir de vacío: es la
+// interacción más frecuente y era la que no se cubría.
+const cycle = await page.evaluate(async () => {
+  const cells = [...document.querySelectorAll('button[role="gridcell"]')]
+  const btn = cells.find((c) => !c.disabled)
+  const out = []
+  for (let i = 0; i < 4; i++) {
+    btn.click()
+    await new Promise((r) => setTimeout(r, 40))
+    const sym = btn.querySelector('.cell-symbol')
+    out.push(sym ? sym.getAnimations().map((a) => a.animationName).length > 0 : 'vacio')
+  }
+  return out
+})
+// Al ciclar hay un paso a vacío: ahí no hay símbolo y no debe animar.
+// Lo que no puede pasar es que haya un símbolo sin pop (false).
+ok(
+  'el pop se repite al ciclar la celda',
+  !cycle.includes(false),
+  JSON.stringify(cycle),
+)
 
 console.log('\n7. micro: ficha de Buscaminas y temblor al perder')
 await enterGame('/juegos/buscaminas')

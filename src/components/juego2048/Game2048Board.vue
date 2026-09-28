@@ -4,6 +4,7 @@ import { SIZE, tileClass } from '../../games/juego2048/constants.js'
 
 defineProps({
   board: { type: Array, required: true },
+  tiles: { type: Array, required: true },
 })
 
 const emit = defineEmits(['move'])
@@ -35,35 +36,138 @@ function fontSizeFor(value) {
   if (value >= 128) return 'clamp(1rem, 8cqw, 2.25rem)'
   return 'clamp(1.15rem, 10cqw, 3rem)'
 }
+
+function cellLabel(value, r, c) {
+  return `Fila ${r + 1}, columna ${c + 1}: ${value === 0 ? 'vacía' : value}`
+}
 </script>
 
 <template>
   <div
-    class="game-board-frame game-2048-board-frame mx-auto grid gap-2 rounded-lg border border-ink-500 bg-ink-900 p-2.5 touch-none"
-    :style="{ gridTemplateColumns: `repeat(${SIZE}, minmax(0, 1fr))` }"
-    role="grid"
-    aria-label="Tablero 2048"
+    class="game-board-frame game-2048-board-frame mx-auto rounded-lg border border-ink-500 bg-ink-900 p-2.5 touch-none"
     @touchstart="onTouchStart"
     @touchend="onTouchEnd"
     @touchcancel="onTouchCancel"
   >
     <div
-      v-for="(row, r) in board"
-      :key="'row-' + r"
-      class="contents"
+      class="game-2048-tile-area relative grid gap-2"
+      :style="{
+        '--tile-count': SIZE,
+        gridTemplateColumns: `repeat(${SIZE}, minmax(0, 1fr))`,
+      }"
+      role="grid"
+      aria-label="Tablero 2048"
     >
       <div
-        v-for="(value, c) in row"
-        :key="'cell-' + r + '-' + c"
-        role="gridcell"
-        :class="[
-          'flex aspect-square items-center justify-center rounded-md font-extrabold tabular-nums transition-colors',
-          value === 0 ? 'bg-ink-950/60 text-transparent' : tileClass(value),
-        ]"
-        :style="{ fontSize: fontSizeFor(value) }"
+        v-for="(row, r) in board"
+        :key="'row-' + r"
+        class="contents"
       >
-        {{ value === 0 ? '·' : value }}
+        <div
+          v-for="(value, c) in row"
+          :key="'cell-' + r + '-' + c"
+          role="gridcell"
+          :aria-label="cellLabel(value, r, c)"
+          class="flex aspect-square items-center justify-center rounded-md bg-ink-950/60 text-transparent"
+        >
+          ·
+        </div>
+      </div>
+
+      <div class="pointer-events-none absolute inset-0" aria-hidden="true">
+        <div
+          v-for="tile in tiles"
+          :key="tile.id"
+          class="game-2048-tile"
+          :data-tile-id="tile.id"
+          :data-value="tile.value"
+          :data-kind="tile.kind || 'normal'"
+          :data-r="tile.r"
+          :data-c="tile.c"
+          :class="[
+            tile.kind === 'ghost'
+              ? 'game-2048-tile--ghost'
+              : tile.kind === 'merged'
+                ? 'game-2048-tile--merged'
+                : 'game-2048-tile--normal',
+          ]"
+          :style="{ '--r': tile.r, '--c': tile.c }"
+        >
+          <div
+            :class="[
+              'game-2048-tile-inner flex h-full w-full items-center justify-center rounded-md font-extrabold tabular-nums',
+              tileClass(tile.value),
+              tile.kind === 'new'
+                ? 'game-2048-tile-inner--new'
+                : tile.kind === 'merged'
+                  ? 'game-2048-tile-inner--merged'
+                  : '',
+            ]"
+            :style="{ fontSize: fontSizeFor(tile.value) }"
+          >
+            {{ tile.value }}
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.game-2048-tile-area {
+  --tile-gap: 0.5rem;
+}
+
+.game-2048-tile {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(
+    (100% - (var(--tile-count) - 1) * var(--tile-gap)) / var(--tile-count)
+  );
+  aspect-ratio: 1;
+  transform: translate(
+    calc(var(--c) * (100% + var(--tile-gap))),
+    calc(var(--r) * (100% + var(--tile-gap)))
+  );
+  transition: transform var(--dur-slide) var(--ease-out-soft);
+  will-change: transform;
+}
+
+.game-2048-tile--ghost {
+  z-index: 1;
+}
+
+.game-2048-tile--normal {
+  z-index: 2;
+}
+
+.game-2048-tile--merged {
+  z-index: 3;
+}
+
+.game-2048-tile-inner--new {
+  animation: bender-pop var(--dur-pop) var(--ease-pop) var(--dur-slide) backwards;
+}
+
+.game-2048-tile-inner--merged {
+  animation: tile-merge var(--dur-pop) var(--ease-pop) var(--dur-slide) backwards;
+}
+
+@keyframes tile-merge {
+  0% {
+    opacity: 0;
+    transform: scale(0.75);
+  }
+
+  45% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+</style>
