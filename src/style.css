@@ -126,13 +126,53 @@
     transform: none;
   }
 
-  /* Aparición de contenido suelta (tarjetas, celdas, chips). */
+  /* Aparición de contenido suelta (tarjetas, celdas, chips).
+     fill-mode backwards y no both a propósito: con both el transform
+     final se queda aplicado y anula los hover:translate-* de la tarjeta,
+     porque una animación gana en la cascada a una declaración normal. */
   .anim-pop {
-    animation: bender-pop var(--dur-pop) var(--ease-pop) both;
+    animation: bender-pop var(--dur-pop) var(--ease-pop) backwards;
   }
 
   .anim-fade-up {
-    animation: bender-fade-up var(--dur-in) var(--ease-out-soft) both;
+    animation: bender-fade-up var(--dur-in) var(--ease-out-soft) backwards;
+  }
+
+  /* Cambio de fase dentro de un juego (configuración → jugando → victoria).
+     Cada rama de la vista es un GamePhase, así que estas clases las
+     aplicó Vue al elemento real y no hay problema de ámbito. */
+  .phase-enter-active,
+  .phase-leave-active {
+    transition:
+      opacity var(--dur-out) var(--ease-out-soft),
+      transform var(--dur-out) var(--ease-out-soft);
+  }
+
+  .phase-enter-active {
+    transition-duration: var(--dur-in);
+  }
+
+  .phase-enter-from,
+  .phase-leave-to {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+
+  .phase-enter-to,
+  .phase-leave-from {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* La victoria (y la derrota) entran con un punto más de escala: es el
+     momento que merece una pizca de énfasis, sin salirse del tono
+     discreto. Dos clases ganan a .phase-enter-from. */
+  .phase-enter-from.game-phase--won {
+    transform: scale(0.94);
+  }
+
+  .phase-leave-to.game-phase--won {
+    transform: scale(0.97);
   }
 }
 

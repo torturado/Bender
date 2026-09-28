@@ -5,6 +5,7 @@ import BuscaminasSetupMenu from '../components/buscaminas/BuscaminasSetupMenu.vu
 import BuscaminasBoard from '../components/buscaminas/BuscaminasBoard.vue'
 import BuscaminasToolbar from '../components/buscaminas/BuscaminasToolbar.vue'
 import BuscaminasWinHero from '../components/buscaminas/BuscaminasWinHero.vue'
+import GamePhase from '../components/GamePhase.vue'
 import {
   TOOL_PALA,
   TOOL_BANDERA,
@@ -287,72 +288,75 @@ function onCellFlag({ r, c }) {
       </div>
     </div>
 
-    <!-- Fase 1: menú de configuración -->
-    <BuscaminasSetupMenu v-if="status === 'setup'" @play="startGame" />
+    <Transition name="phase" mode="out-in">
+      <GamePhase v-if="status === 'setup'">
+        <BuscaminasSetupMenu @play="startGame" />
+      </GamePhase>
 
-    <!-- Fase 2: juego (y tablero revelado al perder) -->
-    <template v-else-if="status === 'playing' || status === 'lost'">
-      <p class="mb-4 text-center text-sm text-mist-400">
-        {{ size }}×{{ size }} · {{ difficultyLabel(difficulty) }} · 💣 {{ mineTotal }} ·
-        con sus 🚩 puestas, pulsa un número para abrir alrededor
-      </p>
-      <BuscaminasToolbar
-        :tool="tool"
-        :flags-left="flagsLeft"
-        :moves="moves"
-        @restart="restart"
-        @set-tool="tool = $event"
-      />
-      <div
-        v-if="status === 'lost'"
-        class="mx-auto mb-4 w-full max-w-[560px] rounded-md border border-red-500 bg-red-500/10 px-4 py-3 text-center text-sm font-bold text-red-400"
-        role="alert"
-      >
-        💥 ¡Boom! Pisaste una mina. Pulsa Reiniciar para intentarlo de nuevo.
-      </div>
-      <BuscaminasBoard
-        :size="size"
-        :numbers="numbers"
-        :mines="mines"
-        :revealed="revealed"
-        :flagged="flagged"
-        :mines-placed="minesPlaced"
-        :status="status"
-        :exploded="exploded"
-        :wrong-flags="lostWrongFlags"
-        @cell-click="onCellClick"
-        @cell-flag="onCellFlag"
-      />
-      <p class="mt-5 text-center">
-        <button
-          type="button"
-          class="bg-transparent border-none text-xs font-semibold text-mist-500 underline-offset-2 hover:text-mist-300 hover:underline"
-          @click="backToSetup"
+      <!-- Al perder no cambia de rama: el tablero se queda y lo que
+           avisa es el aviso y la revelación de las minas. -->
+      <GamePhase v-else-if="status === 'playing' || status === 'lost'">
+        <p class="mb-4 text-center text-sm text-mist-400">
+          {{ size }}×{{ size }} · {{ difficultyLabel(difficulty) }} · 💣 {{ mineTotal }} ·
+          con sus 🚩 puestas, pulsa un número para abrir alrededor
+        </p>
+        <BuscaminasToolbar
+          :tool="tool"
+          :flags-left="flagsLeft"
+          :moves="moves"
+          @restart="restart"
+          @set-tool="tool = $event"
+        />
+        <div
+          v-if="status === 'lost'"
+          class="board-alert mx-auto mb-4 w-full max-w-[560px] rounded-md border border-red-500 bg-red-500/10 px-4 py-3 text-center text-sm font-bold text-red-400"
+          role="alert"
         >
-          Cambiar configuración (tamaño / dificultad)
-        </button>
-      </p>
-    </template>
+          💥 ¡Boom! Pisaste una mina. Pulsa Reiniciar para intentarlo de nuevo.
+        </div>
+        <BuscaminasBoard
+          :size="size"
+          :numbers="numbers"
+          :mines="mines"
+          :revealed="revealed"
+          :flagged="flagged"
+          :mines-placed="minesPlaced"
+          :status="status"
+          :exploded="exploded"
+          :wrong-flags="lostWrongFlags"
+          @cell-click="onCellClick"
+          @cell-flag="onCellFlag"
+        />
+        <p class="mt-5 text-center">
+          <button
+            type="button"
+            class="bg-transparent border-none text-xs font-semibold text-mist-500 underline-offset-2 hover:text-mist-300 hover:underline"
+            @click="backToSetup"
+          >
+            Cambiar configuración (tamaño / dificultad)
+          </button>
+        </p>
+      </GamePhase>
 
-    <!-- Fase 3: hero de completado -->
-    <template v-else>
-      <BuscaminasWinHero
-        :size="size"
-        :difficulty-label="difficultyLabel(difficulty)"
-        :moves="moves"
-        :seconds="winSeconds"
-        @play-again="restart"
-      />
-      <p class="mt-5 text-center">
-        <button
-          type="button"
-          class="bg-transparent border-none text-xs font-semibold text-mist-500 underline-offset-2 hover:text-mist-300 hover:underline"
-          @click="backToSetup"
-        >
-          Cambiar configuración (tamaño / dificultad)
-        </button>
-      </p>
-    </template>
+      <GamePhase v-else variant="won">
+        <BuscaminasWinHero
+          :size="size"
+          :difficulty-label="difficultyLabel(difficulty)"
+          :moves="moves"
+          :seconds="winSeconds"
+          @play-again="restart"
+        />
+        <p class="mt-5 text-center">
+          <button
+            type="button"
+            class="bg-transparent border-none text-xs font-semibold text-mist-500 underline-offset-2 hover:text-mist-300 hover:underline"
+            @click="backToSetup"
+          >
+            Cambiar configuración (tamaño / dificultad)
+          </button>
+        </p>
+      </GamePhase>
+    </Transition>
   </main>
 </template>
 

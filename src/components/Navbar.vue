@@ -282,13 +282,15 @@ onBeforeUnmount(() => {
       </div>
     </aside>
 
-    <button
-      v-if="!isDesktop && isMobileOpen"
-      type="button"
-      class="fixed inset-0 z-40 cursor-default bg-black/65 backdrop-blur-[2px] md:hidden"
-      aria-label="Cerrar menú lateral"
-      @click="closeMobileSidebar"
-    />
+    <Transition name="drawer-backdrop">
+      <button
+        v-if="!isDesktop && isMobileOpen"
+        type="button"
+        class="fixed inset-0 z-40 cursor-default bg-black/65 backdrop-blur-[2px] md:hidden"
+        aria-label="Cerrar menú lateral"
+        @click="closeMobileSidebar"
+      />
+    </Transition>
   </div>
 </template>
 
@@ -300,5 +302,19 @@ onBeforeUnmount(() => {
 
 .nav-link.active:hover {
   background: #f97316;
+}
+
+.drawer-backdrop-enter-active,
+.drawer-backdrop-leave-active {
+  transition: opacity var(--dur-in) var(--ease-out-soft);
+}
+
+.drawer-backdrop-leave-active {
+  transition-duration: var(--dur-out);
+}
+
+.drawer-backdrop-enter-from,
+.drawer-backdrop-leave-to {
+  opacity: 0;
 }
 </style>

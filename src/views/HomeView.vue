@@ -17,7 +17,13 @@ import { games } from '../data/games.js'
     <section
       class="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 min-[1200px]:grid-cols-4 sm:gap-5"
     >
-      <GameHero v-for="game in games" :key="game.id" :game="game" />
+      <GameHero
+        v-for="(game, index) in games"
+        :key="game.id"
+        :game="game"
+        class="anim-fade-up"
+        :style="{ animationDelay: `${index * 45}ms` }"
+      />
     </section>
   </main>
 </template>

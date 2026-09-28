@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import Game2048Board from '../components/juego2048/Game2048Board.vue'
 import Game2048Toolbar from '../components/juego2048/Game2048Toolbar.vue'
 import Game2048Hero from '../components/juego2048/Game2048Hero.vue'
+import GamePhase from '../components/GamePhase.vue'
 import { SIZE, TARGET } from '../games/juego2048/constants.js'
 import {
   cloneBoard,
@@ -217,73 +218,76 @@ onBeforeUnmount(() => {
   >
     <RouterLink to="/" class="back">← Volver al menú</RouterLink>
 
-    <section
-      v-if="status === 'setup'"
-      class="mx-auto w-full max-w-xl rounded-lg border border-ink-500 bg-ink-900 p-6 sm:p-8"
-    >
-      <h2 class="m-0 text-xl font-extrabold tracking-tight text-white">Configura tu partida</h2>
-      <p class="mt-1 mb-6 text-sm text-mist-400">
-        Une fichas iguales hasta llegar al {{ TARGET }} en un tablero de {{ SIZE }}×{{ SIZE }}.
-      </p>
+    <Transition name="phase" mode="out-in">
+      <GamePhase v-if="status === 'setup'" variant="setup">
+        <section
+          class="mx-auto w-full max-w-xl rounded-lg border border-ink-500 bg-ink-900 p-6 sm:p-8"
+        >
+          <h2 class="m-0 text-xl font-extrabold tracking-tight text-white">Configura tu partida</h2>
+          <p class="mt-1 mb-6 text-sm text-mist-400">
+            Une fichas iguales hasta llegar al {{ TARGET }} en un tablero de {{ SIZE }}×{{ SIZE }}.
+          </p>
 
-      <div class="mb-8 grid grid-cols-2 gap-2">
-        <div class="rounded-lg border border-ink-600 bg-ink-800 p-4 text-center">
-          <p class="m-0 text-xs font-bold tracking-wider text-mist-500 uppercase">Tablero</p>
-          <p class="mt-1 mb-0 text-lg font-extrabold text-white">{{ SIZE }}×{{ SIZE }}</p>
-        </div>
-        <div class="rounded-lg border border-ink-600 bg-ink-800 p-4 text-center">
-          <p class="m-0 text-xs font-bold tracking-wider text-mist-500 uppercase">Objetivo</p>
-          <p class="mt-1 mb-0 text-lg font-extrabold text-white">{{ TARGET }}</p>
-        </div>
-      </div>
+          <div class="mb-8 grid grid-cols-2 gap-2">
+            <div class="rounded-lg border border-ink-600 bg-ink-800 p-4 text-center">
+              <p class="m-0 text-xs font-bold tracking-wider text-mist-500 uppercase">Tablero</p>
+              <p class="mt-1 mb-0 text-lg font-extrabold text-white">{{ SIZE }}×{{ SIZE }}</p>
+            </div>
+            <div class="rounded-lg border border-ink-600 bg-ink-800 p-4 text-center">
+              <p class="m-0 text-xs font-bold tracking-wider text-mist-500 uppercase">Objetivo</p>
+              <p class="mt-1 mb-0 text-lg font-extrabold text-white">{{ TARGET }}</p>
+            </div>
+          </div>
 
-      <button
-        type="button"
-        class="w-full rounded-md bg-orange-500 px-5 py-3 text-base font-extrabold text-white transition hover:bg-orange-600"
-        @click="startGame"
-      >
-        Jugar
-      </button>
-      <p class="mt-3 mb-0 text-center text-xs text-mist-400">
-        En móvil, desliza sobre el tablero. En ordenador, usa las flechas o WASD.
-      </p>
-    </section>
+          <button
+            type="button"
+            class="w-full rounded-md bg-orange-500 px-5 py-3 text-base font-extrabold text-white transition hover:bg-orange-600"
+            @click="startGame"
+          >
+            Jugar
+          </button>
+          <p class="mt-3 mb-0 text-center text-xs text-mist-400">
+            En móvil, desliza sobre el tablero. En ordenador, usa las flechas o WASD.
+          </p>
+        </section>
+      </GamePhase>
 
-    <template v-else-if="status === 'playing' || status === 'endless'">
-      <p class="mb-4 text-center text-sm text-mist-400">
-        Desliza y combina hasta {{ TARGET }}.
-        <span v-if="status === 'endless'" class="font-bold text-amber-300">∞ Modo infinito</span>
-        <span v-else class="sm:hidden"> · desliza para mover</span>
-        <span v-if="status !== 'endless'" class="hidden sm:inline"> · flechas o WASD para mover</span>
-      </p>
-      <Game2048Toolbar
-        :can-undo="history.length > 0 && !hasUndone"
-        :score="score"
-        :moves="moves"
-        @restart="restart"
-        @undo="undo"
-      />
-      <Game2048Board :board="board" @move="applyMove" />
-    </template>
+      <GamePhase v-else-if="status === 'playing' || status === 'endless'">
+        <p class="mb-4 text-center text-sm text-mist-400">
+          Desliza y combina hasta {{ TARGET }}.
+          <span v-if="status === 'endless'" class="font-bold text-amber-300">∞ Modo infinito</span>
+          <span v-else class="sm:hidden"> · desliza para mover</span>
+          <span v-if="status !== 'endless'" class="hidden sm:inline"> · flechas o WASD para mover</span>
+        </p>
+        <Game2048Toolbar
+          :can-undo="history.length > 0 && !hasUndone"
+          :score="score"
+          :moves="moves"
+          @restart="restart"
+          @undo="undo"
+        />
+        <Game2048Board :board="board" @move="applyMove" />
+      </GamePhase>
 
-    <!-- Fase 3a: hero de victoria con las 2 opciones -->
-    <Game2048Hero
-      v-else-if="status === 'won'"
-      kind="win"
-      :score="score"
-      :moves="moves"
-      @restart="restart"
-      @continue="continueEndless"
-    />
+      <GamePhase v-else-if="status === 'won'" variant="won">
+        <Game2048Hero
+          kind="win"
+          :score="score"
+          :moves="moves"
+          @restart="restart"
+          @continue="continueEndless"
+        />
+      </GamePhase>
 
-    <!-- Fase 3b: hero de derrota -->
-    <Game2048Hero
-      v-else
-      kind="lost"
-      :score="score"
-      :moves="moves"
-      @restart="restart"
-    />
+      <GamePhase v-else variant="won">
+        <Game2048Hero
+          kind="lost"
+          :score="score"
+          :moves="moves"
+          @restart="restart"
+        />
+      </GamePhase>
+    </Transition>
   </main>
 </template>
 

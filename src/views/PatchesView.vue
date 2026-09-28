@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import PatchesBoard from '../components/patches/PatchesBoard.vue'
 import PatchesToolbar from '../components/patches/PatchesToolbar.vue'
 import PatchesWinHero from '../components/patches/PatchesWinHero.vue'
+import GamePhase from '../components/GamePhase.vue'
 import { DIFFICULTIES, SHAPES, SIZE } from '../games/patches/constants.js'
 import { generatePuzzle } from '../games/patches/generator.js'
 import { checkWin, coversBoard } from '../games/patches/validators.js'
@@ -241,78 +242,81 @@ onUnmounted(() => {
   >
     <RouterLink to="/" class="back">← Volver al menú</RouterLink>
 
-    <section
-      v-if="status === 'setup'"
-      class="mx-auto w-full max-w-xl rounded-lg border border-ink-500 bg-ink-900 p-6 sm:p-8"
-    >
-      <h2 class="m-0 text-xl font-extrabold tracking-tight text-white">Configura tu partida</h2>
-      <p class="mt-1 mb-6 text-sm text-mist-400">
-        Tablero de {{ SIZE }}×{{ SIZE }}. Elige la dificultad antes de empezar.
-      </p>
-
-      <p class="mb-2 text-xs font-bold tracking-wider text-mist-300 uppercase">Dificultad</p>
-      <div class="mb-8 grid grid-cols-3 gap-2" role="radiogroup" aria-label="Dificultad">
-        <button
-          v-for="option in DIFFICULTIES"
-          :key="option.id"
-          type="button"
-          :aria-pressed="setupDifficulty === option.id"
-          :class="[
-            'min-h-[44px] rounded-md border px-3 py-2.5 text-sm font-bold transition',
-            setupDifficulty === option.id
-              ? 'border-orange-400 bg-orange-500 text-white'
-              : 'border-ink-500 bg-ink-800 text-mist-300 hover:border-mist-500 hover:text-white',
-          ]"
-          @click="setupDifficulty = option.id"
+    <Transition name="phase" mode="out-in">
+      <GamePhase v-if="status === 'setup'" variant="setup">
+        <section
+          class="mx-auto w-full max-w-xl rounded-lg border border-ink-500 bg-ink-900 p-6 sm:p-8"
         >
-          {{ option.label }}
-        </button>
-      </div>
+          <h2 class="m-0 text-xl font-extrabold tracking-tight text-white">Configura tu partida</h2>
+          <p class="mt-1 mb-6 text-sm text-mist-400">
+            Tablero de {{ SIZE }}×{{ SIZE }}. Elige la dificultad antes de empezar.
+          </p>
 
-      <button
-        type="button"
-        class="w-full rounded-md bg-orange-500 px-5 py-3 text-base font-extrabold text-white transition hover:bg-orange-600"
-        @click="startGame"
-      >
-        Jugar
-      </button>
-      <p class="mt-3 mb-0 text-center text-xs text-mist-400">
-        Cada partida genera un tablero y unas pistas diferentes.
-      </p>
-    </section>
+          <p class="mb-2 text-xs font-bold tracking-wider text-mist-300 uppercase">Dificultad</p>
+          <div class="mb-8 grid grid-cols-3 gap-2" role="radiogroup" aria-label="Dificultad">
+            <button
+              v-for="option in DIFFICULTIES"
+              :key="option.id"
+              type="button"
+              :aria-pressed="setupDifficulty === option.id"
+              :class="[
+                'min-h-[44px] rounded-md border px-3 py-2.5 text-sm font-bold transition',
+                setupDifficulty === option.id
+                  ? 'border-orange-400 bg-orange-500 text-white'
+                  : 'border-ink-500 bg-ink-800 text-mist-300 hover:border-mist-500 hover:text-white',
+              ]"
+              @click="setupDifficulty = option.id"
+            >
+              {{ option.label }}
+            </button>
+          </div>
 
-    <template v-else-if="status === 'playing'">
-      <PatchesToolbar
-        :difficulty="difficulty"
-        :can-undo="history.length > 0"
-        :moves="moves"
-        @undo="undo"
-        @restart="restart"
-        @new-game="newGame"
-      />
-      <PatchesBoard
-        :clues="clues"
-        :patches="patches"
-        @draw="onDraw"
-        @delete-patch="onDeletePatch"
-      />
-      <div
-        v-if="notice"
-        class="mx-auto mt-4 w-full max-w-[440px] rounded-md border border-red-500 bg-red-500/10 px-4 py-2.5 text-center text-sm font-bold text-red-400"
-        role="alert"
-      >
-        {{ notice }}
-      </div>
-    </template>
+          <button
+            type="button"
+            class="w-full rounded-md bg-orange-500 px-5 py-3 text-base font-extrabold text-white transition hover:bg-orange-600"
+            @click="startGame"
+          >
+            Jugar
+          </button>
+          <p class="mt-3 mb-0 text-center text-xs text-mist-400">
+            Cada partida genera un tablero y unas pistas diferentes.
+          </p>
+        </section>
+      </GamePhase>
 
-    <!-- Fase 2: hero de completado -->
-    <PatchesWinHero
-      v-else
-      :difficulty="difficulty"
-      :moves="moves"
-      :seconds="winSeconds"
-      @play-again="newGame"
-    />
+      <GamePhase v-else-if="status === 'playing'">
+        <PatchesToolbar
+          :difficulty="difficulty"
+          :can-undo="history.length > 0"
+          :moves="moves"
+          @undo="undo"
+          @restart="restart"
+          @new-game="newGame"
+        />
+        <PatchesBoard
+          :clues="clues"
+          :patches="patches"
+          @draw="onDraw"
+          @delete-patch="onDeletePatch"
+        />
+        <div
+          v-if="notice"
+          class="board-alert mx-auto mt-4 w-full max-w-[440px] rounded-md border border-red-500 bg-red-500/10 px-4 py-2.5 text-center text-sm font-bold text-red-400"
+          role="alert"
+        >
+          {{ notice }}
+        </div>
+      </GamePhase>
+
+      <GamePhase v-else variant="won">
+        <PatchesWinHero
+          :difficulty="difficulty"
+          :moves="moves"
+          :seconds="winSeconds"
+          @play-again="newGame"
+        />
+      </GamePhase>
+    </Transition>
   </main>
 </template>
 

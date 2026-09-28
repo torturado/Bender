@@ -5,6 +5,7 @@ import TangoSetupMenu from '../components/tango/TangoSetupMenu.vue'
 import TangoBoard from '../components/tango/TangoBoard.vue'
 import TangoToolbar from '../components/tango/TangoToolbar.vue'
 import TangoWinHero from '../components/tango/TangoWinHero.vue'
+import GamePhase from '../components/GamePhase.vue'
 import {
   EMPTY,
   SUN,
@@ -261,59 +262,60 @@ function onCellClick({ r, c }) {
       </div>
     </div>
 
-    <!-- Fase 1: menú de configuración -->
-    <TangoSetupMenu v-if="status === 'setup'" @play="startGame" />
+    <Transition name="phase" mode="out-in">
+      <GamePhase v-if="status === 'setup'">
+        <TangoSetupMenu @play="startGame" />
+      </GamePhase>
 
-    <!-- Fase 2: juego -->
-    <template v-else-if="status === 'playing'">
-      <p class="mb-4 text-center text-sm text-mist-400">
-        {{ size }}×{{ size }} · {{ difficultyLabel(difficulty) }} · lo que incumple las reglas
-        se marca en <span class="font-bold text-red-400">rojo con una ✕</span>
-      </p>
-      <TangoToolbar
-        :can-undo="history.length > 0"
-        :moves="moves"
-        @restart="restartSame"
-        @undo="undo"
-        @new-game="newPuzzle"
-      />
-      <TangoBoard
-        :board="board"
-        :givens="givens"
-        :error-keys="errorKeys"
-        :constraints="constraints"
-        @cell-click="onCellClick"
-      />
-      <p class="mt-5 text-center">
-        <button
-          type="button"
-          class="bg-transparent border-none text-xs font-semibold text-mist-500 underline-offset-2 hover:text-mist-300 hover:underline"
-          @click="backToSetup"
-        >
-          Cambiar configuración (tamaño / dificultad)
-        </button>
-      </p>
-    </template>
+      <GamePhase v-else-if="status === 'playing'">
+        <p class="mb-4 text-center text-sm text-mist-400">
+          {{ size }}×{{ size }} · {{ difficultyLabel(difficulty) }} · lo que incumple las reglas
+          se marca en <span class="font-bold text-red-400">rojo con una ✕</span>
+        </p>
+        <TangoToolbar
+          :can-undo="history.length > 0"
+          :moves="moves"
+          @restart="restartSame"
+          @undo="undo"
+          @new-game="newPuzzle"
+        />
+        <TangoBoard
+          :board="board"
+          :givens="givens"
+          :error-keys="errorKeys"
+          :constraints="constraints"
+          @cell-click="onCellClick"
+        />
+        <p class="mt-5 text-center">
+          <button
+            type="button"
+            class="bg-transparent border-none text-xs font-semibold text-mist-500 underline-offset-2 hover:text-mist-300 hover:underline"
+            @click="backToSetup"
+          >
+            Cambiar configuración (tamaño / dificultad)
+          </button>
+        </p>
+      </GamePhase>
 
-    <!-- Fase 3: hero de completado -->
-    <template v-else>
-      <TangoWinHero
-        :size="size"
-        :difficulty-label="difficultyLabel(difficulty)"
-        :moves="moves"
-        :seconds="winSeconds"
-        @play-again="newPuzzle"
-      />
-      <p class="mt-5 text-center">
-        <button
-          type="button"
-          class="bg-transparent border-none text-xs font-semibold text-mist-500 underline-offset-2 hover:text-mist-300 hover:underline"
-          @click="backToSetup"
-        >
-          Cambiar configuración (tamaño / dificultad)
-        </button>
-      </p>
-    </template>
+      <GamePhase v-else variant="won">
+        <TangoWinHero
+          :size="size"
+          :difficulty-label="difficultyLabel(difficulty)"
+          :moves="moves"
+          :seconds="winSeconds"
+          @play-again="newPuzzle"
+        />
+        <p class="mt-5 text-center">
+          <button
+            type="button"
+            class="bg-transparent border-none text-xs font-semibold text-mist-500 underline-offset-2 hover:text-mist-300 hover:underline"
+            @click="backToSetup"
+          >
+            Cambiar configuración (tamaño / dificultad)
+          </button>
+        </p>
+      </GamePhase>
+    </Transition>
   </main>
 </template>
 
