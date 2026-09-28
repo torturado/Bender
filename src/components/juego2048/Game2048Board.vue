@@ -16,6 +16,10 @@ function onTouchStart(e) {
   touchStart.value = { x: t.clientX, y: t.clientY }
 }
 
+function onTouchCancel() {
+  touchStart.value = null
+}
+
 function onTouchEnd(e) {
   if (!touchStart.value) return
   const t = e.changedTouches[0]
@@ -26,21 +30,22 @@ function onTouchEnd(e) {
   emit('move', Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up')
 }
 
-function fontFor(value) {
-  if (value >= 1024) return 'text-xl sm:text-2xl'
-  if (value >= 128) return 'text-2xl sm:text-3xl'
-  return 'text-3xl sm:text-4xl'
+function fontSizeFor(value) {
+  if (value >= 1024) return 'clamp(0.8rem, 6cqw, 1.75rem)'
+  if (value >= 128) return 'clamp(1rem, 8cqw, 2.25rem)'
+  return 'clamp(1.15rem, 10cqw, 3rem)'
 }
 </script>
 
 <template>
   <div
-    class="mx-auto grid w-full max-w-[440px] gap-2 rounded-lg border border-ink-500 bg-ink-900 p-2.5 touch-pan-y"
+    class="game-board-frame game-2048-board-frame mx-auto grid gap-2 rounded-lg border border-ink-500 bg-ink-900 p-2.5 touch-none"
     :style="{ gridTemplateColumns: `repeat(${SIZE}, minmax(0, 1fr))` }"
     role="grid"
     aria-label="Tablero 2048"
     @touchstart="onTouchStart"
     @touchend="onTouchEnd"
+    @touchcancel="onTouchCancel"
   >
     <div
       v-for="(row, r) in board"
@@ -53,9 +58,9 @@ function fontFor(value) {
         role="gridcell"
         :class="[
           'flex aspect-square items-center justify-center rounded-md font-extrabold tabular-nums transition-colors',
-          fontFor(value),
           value === 0 ? 'bg-ink-950/60 text-transparent' : tileClass(value),
         ]"
+        :style="{ fontSize: fontSizeFor(value) }"
       >
         {{ value === 0 ? '·' : value }}
       </div>

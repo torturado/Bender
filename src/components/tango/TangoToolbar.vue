@@ -8,10 +8,10 @@ const emit = defineEmits(['restart', 'undo', 'new-game'])
 </script>
 
 <template>
-  <div class="mx-auto mb-5 flex w-full max-w-[560px] flex-wrap items-center justify-center gap-2">
+  <div class="mx-auto mb-5 grid w-full max-w-[560px] grid-cols-3 gap-2">
     <button
       type="button"
-      class="rounded-md border border-ink-500 bg-ink-800 min-h-[44px] px-4 py-2 text-sm font-bold text-mist-200 transition hover:border-mist-500 hover:text-white"
+      class="min-h-[44px] w-full min-w-0 rounded-md border border-ink-500 bg-ink-800 px-1.5 py-2 text-xs font-bold whitespace-nowrap text-mist-200 transition hover:border-mist-500 hover:text-white sm:px-4 sm:text-sm"
       @click="emit('restart')"
     >
       ↺ Reiniciar
@@ -19,19 +19,23 @@ const emit = defineEmits(['restart', 'undo', 'new-game'])
     <button
       type="button"
       :disabled="!canUndo"
-      class="rounded-md border border-ink-500 bg-ink-800 min-h-[44px] px-4 py-2 text-sm font-bold text-mist-200 transition hover:border-mist-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+      class="min-h-[44px] w-full min-w-0 rounded-md border border-ink-500 bg-ink-800 px-1.5 py-2 text-xs font-bold whitespace-nowrap text-mist-200 transition hover:border-mist-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 sm:px-4 sm:text-sm"
       @click="emit('undo')"
     >
       ↩ Deshacer
     </button>
     <button
       type="button"
-      class="rounded-md border border-orange-400 bg-orange-500 min-h-[44px] px-4 py-2 text-sm font-bold text-white transition hover:bg-orange-600"
+      class="min-h-[44px] w-full min-w-0 rounded-md border border-orange-400 bg-orange-500 px-1.5 py-2 text-xs font-bold whitespace-nowrap text-white transition hover:bg-orange-600 sm:px-4 sm:text-sm"
       @click="emit('new-game')"
     >
-      + Otra partida
+      <span class="sm:hidden">+ Nueva</span>
+      <span class="hidden sm:inline">+ Otra partida</span>
     </button>
-    <span v-if="moves > 0" class="w-full text-center text-xs text-mist-400">
+    <span
+      v-if="moves > 0"
+      class="col-span-3 text-center text-xs text-mist-400"
+    >
       {{ moves }} movimiento{{ moves === 1 ? '' : 's' }}
     </span>
   </div>

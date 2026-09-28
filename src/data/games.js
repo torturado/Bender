@@ -10,7 +10,6 @@ export const games = [
     route: '/juegos/tango',
     color: '#14532d',
     borderColor: '#fb923c',
-    tags: ['Lógica', '1 jugador'],
   },
   {
     id: 'buscaminas',
@@ -21,7 +20,6 @@ export const games = [
     route: '/juegos/buscaminas',
     color: '#9a3412',
     borderColor: '#fdba74',
-    tags: ['Clásico', '1 jugador'],
   },
   {
     id: 'patches',
@@ -32,7 +30,6 @@ export const games = [
     route: '/juegos/patches',
     color: '#5b21b6',
     borderColor: '#fb923c',
-    tags: ['Lógica', '1 jugador'],
   },
   {
     id: '2048',
@@ -43,6 +40,5 @@ export const games = [
     route: '/juegos/2048',
     color: '#0c4a6e',
     borderColor: '#fb923c',
-    tags: ['Puzzle', '1 jugador'],
   },
 ]

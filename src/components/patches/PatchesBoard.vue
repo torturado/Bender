@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { SIZE, PATCH_PALETTE } from '../../games/patches/constants.js'
-import { normalizeRect, validatePlacement } from '../../games/patches/validators.js'
+import { cluesInRect, normalizeRect, validatePlacement } from '../../games/patches/validators.js'
 
 const props = defineProps({
   clues: { type: Array, required: true },
@@ -19,9 +19,12 @@ const preview = computed(() => {
   return normalizeRect(dragStart.value, dragEnd.value)
 })
 
-const previewValid = computed(() => {
-  if (!preview.value) return false
+const previewState = computed(() => {
+  if (!preview.value) return null
+  if (cluesInRect(preview.value, props.clues).length === 0) return 'unrelated'
   return validatePlacement(preview.value, props.clues, props.patches).ok
+    ? 'valid'
+    : 'invalid'
 })
 
 const previewKeys = computed(() => {
@@ -50,12 +53,21 @@ function rectAreaOf(rect) {
 
 /** Parches como piezas fusionadas: estilo + área para la capa superpuesta. */
 const patchOverlays = computed(() =>
-  props.patches.map((p, i) => ({
-    id: p.id,
-    style: overlayStyle(p),
-    area: rectAreaOf(p),
-    palette: PATCH_PALETTE[i % PATCH_PALETTE.length],
-  })),
+  props.patches.map((p, i) => {
+    const related = cluesInRect(p, props.clues).length > 0
+    const valid = related && validatePlacement(
+      p,
+      props.clues,
+      props.patches.filter((_, patchIndex) => patchIndex !== i),
+    ).ok
+    return {
+      id: p.id,
+      style: overlayStyle(p),
+      area: rectAreaOf(p),
+      state: !related ? 'unrelated' : valid ? 'valid' : 'invalid',
+      palette: PATCH_PALETTE[i % PATCH_PALETTE.length],
+    }
+  }),
 )
 
 /** Contorno + cuenta del rectángulo que se está dibujando. */
@@ -64,7 +76,7 @@ const previewOverlay = computed(() => {
   return {
     style: overlayStyle(preview.value),
     area: rectAreaOf(preview.value),
-    valid: previewValid.value,
+    state: previewState.value,
   }
 })
 
@@ -112,12 +124,16 @@ function onPointerUp(e) {
   if (props.disabled) return
   const same = start.r === end.r && start.c === end.c
   if (same) {
-    // Tap sin arrastre: borra el parche de esa casilla, si hay.
     const idx = patchOfCell.value.get(`${start.r},${start.c}`)
     if (idx !== undefined) emit('delete-patch', props.patches[idx].id)
     return
   }
   emit('draw', normalizeRect(start, end))
+}
+
+function onPointerCancel() {
+  dragStart.value = null
+  dragEnd.value = null
 }
 
 function shapeIcon(shape) {
@@ -129,11 +145,8 @@ function shapeIcon(shape) {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-[440px]">
-    <p class="mb-3 text-center text-xs text-mist-500">
-      Arrastra de esquina a esquina para dibujar un parche · toca un parche para borrarlo
-    </p>
-    <div class="rounded-lg border border-ink-500 bg-ink-900 p-2">
+  <div class="game-board-frame patches-board-frame mx-auto">
+    <div class="rounded-lg bg-ink-900 ring-1 ring-ink-500">
     <div class="relative">
       <!-- Base: casillas vacías + feedback del dibujo -->
       <div
@@ -143,7 +156,7 @@ function shapeIcon(shape) {
         aria-label="Tablero de Patches"
         @pointermove="onPointerMove"
         @pointerup="onPointerUp"
-        @pointercancel="dragStart = null"
+        @pointercancel="onPointerCancel"
       >
         <template v-for="r in SIZE" :key="'row-' + r">
           <div
@@ -156,9 +169,11 @@ function shapeIcon(shape) {
             :class="[
               'aspect-square rounded border transition-colors',
               previewKeys.has(`${r - 1},${c - 1}`)
-                ? previewValid
+                ? previewState === 'valid'
                   ? 'border-orange-400 bg-orange-500/30'
-                  : 'border-red-500 bg-red-500/20'
+                  : previewState === 'unrelated'
+                    ? 'border-gray-400 bg-gray-500/20'
+                    : 'border-red-500 bg-red-500/20'
                 : 'border-ink-500 bg-ink-950/60 hover:border-mist-500',
             ]"
             @pointerdown="onPointerDown($event, r - 1, c - 1)"
@@ -172,11 +187,23 @@ function shapeIcon(shape) {
           v-for="o in patchOverlays"
           :key="'patch-' + o.id"
           :style="o.style"
-          :class="['absolute flex items-center justify-center rounded-lg', o.palette.bg]"
+          :class="o.state === 'valid'
+            ? ['patch-overlay absolute flex items-center justify-center rounded-lg', o.palette.bg, o.palette.text]
+            : o.state === 'unrelated'
+              ? 'patch-overlay patch-overlay--unrelated absolute flex items-center justify-center rounded-lg border border-gray-400/60 bg-gray-500/35 text-mist-200'
+              : 'patch-overlay patch-overlay--invalid absolute flex items-center justify-center rounded-lg border-2 border-red-500 bg-red-500/20 text-red-100 ring-2 ring-red-500/30'"
         >
           <span
-            :class="['text-2xl font-extrabold drop-shadow-md sm:text-3xl', o.palette.text]"
+            :class="['patch-area-number font-extrabold drop-shadow-md', o.state === 'valid' ? o.palette.text : o.state === 'unrelated' ? 'text-mist-200' : 'text-red-100']"
             >{{ o.area }}</span
+          >
+          <span
+            v-if="o.state === 'invalid'"
+            class="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-950 text-xs font-black text-red-100"
+            aria-label="Parche incorrecto"
+          >
+            ×
+          </span
           >
         </div>
         <div
@@ -184,10 +211,14 @@ function shapeIcon(shape) {
           :style="previewOverlay.style"
           :class="[
             'absolute flex items-center justify-center rounded-lg border-2 border-dashed',
-            previewOverlay.valid ? 'border-orange-300' : 'border-red-400',
+            previewOverlay.state === 'valid'
+              ? 'border-orange-300'
+              : previewOverlay.state === 'unrelated'
+                ? 'border-gray-400'
+                : 'border-red-400',
           ]"
         >
-          <span class="text-2xl font-extrabold text-white drop-shadow-md sm:text-3xl">{{
+          <span class="patch-area-number font-extrabold text-white drop-shadow-md">{{
             previewOverlay.area
           }}</span>
         </div>
@@ -202,8 +233,8 @@ function shapeIcon(shape) {
           :style="clueStyle(clue)"
           class="absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center leading-none text-mist-100 drop-shadow"
         >
-          <span class="text-xl font-extrabold sm:text-2xl">{{ clue.number ?? '?' }}</span>
-          <span v-if="shapeIcon(clue.shape)" class="text-[10px] opacity-80">{{
+          <span class="board-clue-number font-extrabold">{{ clue.number ?? '?' }}</span>
+          <span v-if="shapeIcon(clue.shape)" class="board-clue-shape opacity-80">{{
             shapeIcon(clue.shape)
           }}</span>
         </div>
@@ -213,3 +244,20 @@ function shapeIcon(shape) {
     </div>
   </div>
 </template>
+
+<style scoped>
+.patch-area-number {
+  font-size: clamp(0.8rem, 5.5cqw, 1.75rem);
+  line-height: 1;
+}
+
+.board-clue-number {
+  font-size: clamp(0.7rem, 4.5cqw, 1.5rem);
+  line-height: 1;
+}
+
+.board-clue-shape {
+  font-size: clamp(0.4rem, 2.3cqw, 0.75rem);
+  line-height: 1;
+}
+</style>
