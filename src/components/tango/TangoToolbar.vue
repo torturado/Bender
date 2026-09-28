@@ -34,7 +34,7 @@ const emit = defineEmits(['restart', 'undo', 'new-game'])
     </button>
     <span
       v-if="moves > 0"
-      class="col-span-3 text-center text-xs text-mist-400"
+      class="anim-fade-up col-span-3 text-center text-xs text-mist-400"
     >
       {{ moves }} movimiento{{ moves === 1 ? '' : 's' }}
     </span>

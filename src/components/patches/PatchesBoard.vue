@@ -188,10 +188,10 @@ function shapeIcon(shape) {
           :key="'patch-' + o.id"
           :style="o.style"
           :class="o.state === 'valid'
-            ? ['patch-overlay absolute flex items-center justify-center rounded-lg', o.palette.bg, o.palette.text]
+            ? ['patch-overlay anim-pop-sm absolute flex items-center justify-center rounded-lg', o.palette.bg, o.palette.text]
             : o.state === 'unrelated'
-              ? 'patch-overlay patch-overlay--unrelated absolute flex items-center justify-center rounded-lg border border-gray-400/60 bg-gray-500/35 text-mist-200'
-              : 'patch-overlay patch-overlay--invalid absolute flex items-center justify-center rounded-lg border-2 border-red-500 bg-red-500/20 text-red-100 ring-2 ring-red-500/30'"
+              ? 'patch-overlay patch-overlay--unrelated anim-pop-sm absolute flex items-center justify-center rounded-lg border border-gray-400/60 bg-gray-500/35 text-mist-200'
+              : 'patch-overlay patch-overlay--invalid anim-pop-sm absolute flex items-center justify-center rounded-lg border-2 border-red-500 bg-red-500/20 text-red-100 ring-2 ring-red-500/30'"
         >
           <span
             :class="['patch-area-number font-extrabold drop-shadow-md', o.state === 'valid' ? o.palette.text : o.state === 'unrelated' ? 'text-mist-200' : 'text-red-100']"

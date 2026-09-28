@@ -68,21 +68,29 @@ function cellContent(r, c) {
             : cellContent(r - 1, c - 1) === 'wrong-flag'
               ? 'border-red-500 bg-red-500/15'
               : exploded && exploded.r === r - 1 && exploded.c === c - 1
-                ? 'border-red-500 bg-red-600'
+                ? 'cell-boom border-red-500 bg-red-600'
                 : 'cursor-default border-ink-600 bg-ink-950',
           !interactive ? 'hover:border-ink-500' : '',
         ]"
         @click="emit('cell-click', { r: r - 1, c: c - 1 })"
         @contextmenu.prevent="emit('cell-flag', { r: r - 1, c: c - 1 })"
       >
-        <span v-if="cellContent(r - 1, c - 1) === 'mine'" class="cell-content leading-none">💣</span>
+        <span
+          v-if="cellContent(r - 1, c - 1) === 'mine'"
+          class="cell-content anim-pop leading-none"
+          >💣</span
+        >
         <span
           v-else-if="cellContent(r - 1, c - 1) === 'number'"
-          class="cell-content leading-none"
+          class="cell-content anim-pop leading-none"
           :class="NUMBER_CLASSES[numbers[r - 1][c - 1]]"
           >{{ numbers[r - 1][c - 1] }}</span
         >
-        <span v-else-if="cellContent(r - 1, c - 1) === 'flag'" class="cell-content leading-none">🚩</span>
+        <span
+          v-else-if="cellContent(r - 1, c - 1) === 'flag'"
+          class="cell-content anim-pop leading-none"
+          >🚩</span
+        >
         <span
           v-else-if="cellContent(r - 1, c - 1) === 'wrong-flag'"
           class="cell-content leading-none"
@@ -101,5 +109,34 @@ function cellContent(r, c) {
 .cell-content {
   font-size: clamp(0.55rem, 32cqw, 1.25rem);
   line-height: 1;
+}
+
+/* La mina que te ha matado tiembla una vez al perder. Solo se anima
+   transform: un tablero de 16x30 con box-shadow animado se arrastra. */
+.cell-boom {
+  animation: cell-boom 420ms var(--ease-out-soft) both;
+}
+
+@keyframes cell-boom {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  15% {
+    transform: translateX(-5px);
+  }
+
+  35% {
+    transform: translateX(4px);
+  }
+
+  55% {
+    transform: translateX(-3px);
+  }
+
+  75% {
+    transform: translateX(2px);
+  }
 }
 </style>

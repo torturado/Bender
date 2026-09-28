@@ -75,11 +75,19 @@ function onCell(r, c) {
           ]"
           @click="onCell(r - 1, c - 1)"
         >
-            <span v-if="board[r - 1][c - 1] === SUN" class="cell-symbol leading-none text-amber-300">☀</span>
-            <span v-else-if="board[r - 1][c - 1] === MOON" class="cell-symbol leading-none text-sky-300">☾</span>
+            <span
+              v-if="board[r - 1][c - 1] === SUN"
+              class="cell-symbol anim-pop leading-none text-amber-300"
+              >☀</span
+            >
+            <span
+              v-else-if="board[r - 1][c - 1] === MOON"
+              class="cell-symbol anim-pop leading-none text-sky-300"
+              >☾</span
+            >
             <span
               v-if="isError(r - 1, c - 1)"
-              class="cell-error pointer-events-none absolute top-0.5 right-1 font-black text-red-400"
+              class="cell-error anim-fade-up pointer-events-none absolute top-0.5 right-1 font-black text-red-400"
               aria-hidden="true"
               >✕</span
             >

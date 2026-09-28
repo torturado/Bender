@@ -57,7 +57,7 @@ const emit = defineEmits(['restart', 'set-tool'])
 
     <span class="col-span-2 text-center text-xs text-mist-400">
       🚩 {{ flagsLeft }} restante{{ flagsLeft === 1 ? '' : 's' }}
-      <span v-if="moves > 0"> · {{ moves }} movimiento{{ moves === 1 ? '' : 's' }}</span>
+      <span v-if="moves > 0" class="anim-fade-up"> · {{ moves }} movimiento{{ moves === 1 ? '' : 's' }}</span>
     </span>
   </div>
 </template>
