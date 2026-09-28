@@ -48,8 +48,7 @@ function cellContent(r, c) {
 
 <template>
   <div
-    class="mx-auto grid w-full gap-1"
-    :class="size >= 12 ? 'max-w-[560px]' : 'max-w-[440px]'"
+    class="game-board-frame buscaminas-board-frame mx-auto grid gap-1"
     :style="{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }"
     role="grid"
     aria-label="Tablero de Buscaminas"
@@ -63,8 +62,7 @@ function cellContent(r, c) {
         :aria-label="`Fila ${r}, columna ${c}`"
         :aria-disabled="!interactive"
         :class="[
-          'flex aspect-square items-center justify-center rounded border text-base font-extrabold transition select-none',
-          size >= 12 ? 'sm:text-lg' : 'sm:text-xl',
+          'buscaminas-cell flex aspect-square items-center justify-center rounded border font-extrabold transition select-none',
           cellContent(r - 1, c - 1) === 'hidden'
             ? 'border-ink-500 bg-ink-900 hover:border-orange-400'
             : cellContent(r - 1, c - 1) === 'wrong-flag'
@@ -77,18 +75,31 @@ function cellContent(r, c) {
         @click="emit('cell-click', { r: r - 1, c: c - 1 })"
         @contextmenu.prevent="emit('cell-flag', { r: r - 1, c: c - 1 })"
       >
-        <span v-if="cellContent(r - 1, c - 1) === 'mine'" class="leading-none">💣</span>
+        <span v-if="cellContent(r - 1, c - 1) === 'mine'" class="cell-content leading-none">💣</span>
         <span
           v-else-if="cellContent(r - 1, c - 1) === 'number'"
-          class="leading-none"
+          class="cell-content leading-none"
           :class="NUMBER_CLASSES[numbers[r - 1][c - 1]]"
           >{{ numbers[r - 1][c - 1] }}</span
         >
-        <span v-else-if="cellContent(r - 1, c - 1) === 'flag'" class="leading-none">🚩</span>
-        <span v-else-if="cellContent(r - 1, c - 1) === 'wrong-flag'" class="leading-none"
+        <span v-else-if="cellContent(r - 1, c - 1) === 'flag'" class="cell-content leading-none">🚩</span>
+        <span
+          v-else-if="cellContent(r - 1, c - 1) === 'wrong-flag'"
+          class="cell-content leading-none"
           >🚩<span class="text-red-400">✕</span></span
         >
       </button>
     </template>
   </div>
 </template>
+
+<style scoped>
+.buscaminas-cell {
+  container-type: inline-size;
+}
+
+.cell-content {
+  font-size: clamp(0.55rem, 32cqw, 1.25rem);
+  line-height: 1;
+}
+</style>

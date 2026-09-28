@@ -76,6 +76,18 @@ export function validatePlacement(rect, clues, patches) {
  * Victoria: todas las celdas cubiertas exactamente una vez y cada parche
  * con exactamente una pista que cumple área y forma.
  */
+export function coversBoard(patches, size) {
+  const seen = new Set()
+  for (const patch of patches) {
+    for (let r = patch.r1; r <= patch.r2; r++) {
+      for (let c = patch.c1; c <= patch.c2; c++) {
+        seen.add(`${r},${c}`)
+      }
+    }
+  }
+  return seen.size === size * size
+}
+
 export function checkWin(patches, clues, size) {
   if (patches.length !== clues.length) return false
   const seen = new Set()

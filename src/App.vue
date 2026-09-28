@@ -1,19 +1,209 @@
 <script setup>
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { Capacitor } from '@capacitor/core'
+import { App as CapacitorApp } from '@capacitor/app'
 import Navbar from './components/Navbar.vue'
+
+const PROTECTED_ROUTES = new Set(['tango', 'buscaminas', 'patches', 'juego-2048'])
+const SAVE_KEYS = {
+  tango: 'bender.tango.save.v1',
+  buscaminas: 'bender.buscaminas.save.v1',
+  patches: 'bender.patches.save.v1',
+  'juego-2048': 'bender.2048.save.v1',
+}
+
+const route = useRoute()
+const router = useRouter()
+const exitDialogOpen = ref(false)
+const pendingExitTarget = ref(null)
+const continueButton = ref(null)
+const isProtectedRoute = computed(() => PROTECTED_ROUTES.has(route.name))
+
+let previouslyFocused = null
+let allowNextNavigation = false
+let removeBackButtonListener = null
+
+function setAppInert(inert) {
+  const appRoot = document.getElementById('app')
+  if (!appRoot) return
+  if (inert) {
+    appRoot.setAttribute('inert', '')
+  } else {
+    appRoot.removeAttribute('inert')
+  }
+}
+
+function hasSavedGame(routeName) {
+  const key = SAVE_KEYS[routeName]
+  if (!key) return false
+  try {
+    return Boolean(localStorage.getItem(key))
+  } catch {
+    return false
+  }
+}
+
+function setDialogPageState(open) {
+  document.documentElement.classList.toggle('exit-dialog-open', open)
+  setAppInert(open)
+}
+
+async function openExitDialog(target) {
+  if (!exitDialogOpen.value) {
+    previouslyFocused = document.activeElement
+  }
+  pendingExitTarget.value = target
+  exitDialogOpen.value = true
+  setDialogPageState(true)
+  await nextTick()
+  continueButton.value?.focus()
+}
+
+async function closeExitDialog() {
+  if (!exitDialogOpen.value) return
+  exitDialogOpen.value = false
+  setDialogPageState(false)
+  pendingExitTarget.value = null
+  await nextTick()
+  if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus()
+}
+
+async function confirmExit() {
+  const target = pendingExitTarget.value
+  if (!target) return
+  exitDialogOpen.value = false
+  setDialogPageState(false)
+  pendingExitTarget.value = null
+  allowNextNavigation = true
+  try {
+    await router.replace(target.location)
+  } catch {
+    allowNextNavigation = false
+    await openExitDialog(target)
+  }
+}
+
+const removeNavigationGuard = router.beforeEach((to, from) => {
+  if (allowNextNavigation) {
+    allowNextNavigation = false
+    return true
+  }
+  if (
+    !PROTECTED_ROUTES.has(from.name) ||
+    to.fullPath === from.fullPath ||
+    !hasSavedGame(from.name)
+  ) {
+    return true
+  }
+  openExitDialog({
+    fullPath: to.fullPath,
+    location: {
+      path: to.path,
+      query: { ...to.query },
+      hash: to.hash,
+    },
+  })
+  return false
+})
+
+async function handleNativeBack() {
+  if (exitDialogOpen.value) {
+    await closeExitDialog()
+    return
+  }
+  if (isProtectedRoute.value && hasSavedGame(route.name)) {
+    await openExitDialog({
+      fullPath: '/',
+      location: { path: '/' },
+    })
+    return
+  }
+  if (window.history.state?.back) {
+    window.history.back()
+    return
+  }
+  await CapacitorApp.exitApp()
+}
+
+onMounted(async () => {
+  if (!Capacitor.isNativePlatform()) return
+  try {
+    removeBackButtonListener = await CapacitorApp.addListener(
+      'backButton',
+      handleNativeBack,
+    )
+  } catch {}
+})
+
+onBeforeUnmount(() => {
+  removeNavigationGuard()
+  removeBackButtonListener?.remove()
+  setDialogPageState(false)
+})
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col">
-    <!-- Menú de inicio global -->
+  <div class="flex min-h-screen">
     <Navbar />
 
-    <!-- Aquí se renderiza Inicio o cada juego según la ruta -->
-    <RouterView />
-
-    <footer
-      class="mt-auto border-t border-ink-600 px-6 py-6 text-center text-sm text-mist-400"
-    >
-      <p class="m-0">Bender Juegos</p>
-    </footer>
+    <div class="flex min-w-0 flex-1 flex-col pt-14 md:pt-0">
+      <RouterView />
+    </div>
   </div>
+
+  <Teleport to="body">
+    <div
+      v-if="exitDialogOpen"
+      class="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 px-4 py-6 backdrop-blur-sm"
+      @click.self="closeExitDialog"
+      @keydown.esc.stop.prevent="closeExitDialog"
+    >
+      <section
+        class="w-full max-w-md rounded-2xl border border-ink-600 bg-ink-900 p-6 text-center shadow-2xl"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="exit-dialog-title"
+        aria-describedby="exit-dialog-description"
+      >
+        <div
+          class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-orange-500/15 text-2xl"
+          aria-hidden="true"
+        >
+          ↩
+        </div>
+        <h2 id="exit-dialog-title" class="m-0 text-2xl font-extrabold text-white">
+          ¿Quieres salir del juego?
+        </h2>
+        <p id="exit-dialog-description" class="mt-3 mb-6 text-mist-300">
+          Si tienes una partida en curso, se guarda automáticamente para continuar cuando vuelvas.
+        </p>
+        <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            class="min-h-12 rounded-lg border border-ink-600 px-5 py-3 font-bold text-mist-200 transition hover:bg-ink-800 hover:text-white"
+            @click="confirmExit"
+          >
+            Salir
+          </button>
+          <button
+            ref="continueButton"
+            type="button"
+            class="min-h-12 rounded-lg bg-orange-500 px-5 py-3 font-extrabold text-white transition hover:bg-orange-600"
+            @click="closeExitDialog"
+          >
+            Seguir jugando
+          </button>
+        </div>
+      </section>
+    </div>
+  </Teleport>
 </template>
+
+<style scoped>
+:global(html.exit-dialog-open),
+:global(html.exit-dialog-open body) {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+</style>

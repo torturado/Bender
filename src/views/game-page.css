@@ -4,9 +4,44 @@
    para no duplicar hex. Los juegos nuevos deberían usar
    utilidades Tailwind directamente en el template. */
 .game-page {
+  width: 100%;
   max-width: 900px;
   margin: 0 auto;
   padding: 2rem 1.5rem 4rem;
+}
+
+.game-page--active {
+  height: calc(100vh - 3.5rem);
+  height: calc(100dvh - 3.5rem);
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.game-board-frame {
+  --board-max: 35rem;
+  width: 100%;
+  max-width: var(--board-max);
+  margin-inline: auto;
+  overscroll-behavior: contain;
+  container-type: inline-size;
+}
+
+@media (min-width: 768px) {
+  .game-page--active {
+    height: 100vh;
+    height: 100dvh;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) and (max-width: 1024px) {
+  .game-board-frame {
+    width: 85vw;
+    width: 85dvw;
+    max-width: none;
+  }
 }
 
 .back {
