@@ -13,7 +13,7 @@ const emit = defineEmits(['restart', 'continue'])
     class="mx-auto w-full max-w-[440px] rounded-lg border-2 border-(--game-2048-border) bg-(--game-2048) p-8 text-center text-white shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
   >
     <template v-if="kind === 'win'">
-      <p class="mb-2 inline-block rounded bg-ink-950 px-2.5 py-0.5 text-[0.72rem] font-bold tracking-wider uppercase">
+      <p class="mb-2 inline-block rounded bg-ink-950 px-2.5 py-0.5 text-[0.72rem] font-bold tracking-wider text-mist-100 uppercase">
         Objetivo cumplido
       </p>
       <h2 class="m-0 mb-2 text-3xl font-extrabold tracking-tight">¡Llegaste a 2048! 🎉</h2>
@@ -23,7 +23,7 @@ const emit = defineEmits(['restart', 'continue'])
       <div class="flex flex-col justify-center gap-2 sm:flex-row">
         <button
           type="button"
-          class="rounded-md border border-ink-500 bg-ink-800 px-6 py-3 text-base font-extrabold text-white transition hover:border-mist-500"
+          class="rounded-md border border-ink-500 bg-ink-800 px-6 py-3 text-base font-extrabold text-mist-100 transition hover:border-mist-500"
           @click="emit('restart')"
         >
           ↺ Reiniciar
@@ -38,7 +38,7 @@ const emit = defineEmits(['restart', 'continue'])
       </div>
     </template>
     <template v-else>
-      <p class="mb-2 inline-block rounded bg-ink-950 px-2.5 py-0.5 text-[0.72rem] font-bold tracking-wider uppercase">
+      <p class="mb-2 inline-block rounded bg-ink-950 px-2.5 py-0.5 text-[0.72rem] font-bold tracking-wider text-mist-100 uppercase">
         Sin movimientos
       </p>
       <h2 class="m-0 mb-2 text-3xl font-extrabold tracking-tight">Partida terminada</h2>

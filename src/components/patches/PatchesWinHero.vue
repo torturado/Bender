@@ -20,7 +20,7 @@ function formatTime(s) {
   <section
     class="mx-auto w-full max-w-[440px] rounded-lg border-2 border-(--game-patches-border) bg-(--game-patches) p-8 text-center text-white shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
   >
-    <p class="mb-2 inline-block rounded bg-ink-950 px-2.5 py-0.5 text-[0.72rem] font-bold tracking-wider uppercase">
+    <p class="mb-2 inline-block rounded bg-ink-950 px-2.5 py-0.5 text-[0.72rem] font-bold tracking-wider text-mist-100 uppercase">
       Patches completado
     </p>
     <h2 class="m-0 mb-2 text-3xl font-extrabold tracking-tight">¡Tablero completo! 🎉</h2>

@@ -17,16 +17,16 @@ const emit = defineEmits(['cell-click', 'cell-flag'])
 
 const interactive = computed(() => props.status === 'playing')
 
-// Colores clásicos de números adaptados al tema oscuro.
+// En claro los *-300/*-400 se lavan sobre la casilla clara: bajan a *-700.
 const NUMBER_CLASSES = {
-  1: 'text-sky-400',
-  2: 'text-green-400',
-  3: 'text-red-400',
-  4: 'text-violet-400',
-  5: 'text-amber-400',
-  6: 'text-teal-300',
-  7: 'text-white',
-  8: 'text-mist-400',
+  1: 'text-sky-400 light:text-sky-700',
+  2: 'text-green-400 light:text-green-700',
+  3: 'text-red-400 light:text-red-700',
+  4: 'text-violet-400 light:text-violet-700',
+  5: 'text-amber-400 light:text-amber-700',
+  6: 'text-teal-300 light:text-teal-700',
+  7: 'text-mist-100',
+  8: 'text-mist-400 light:text-mist-200',
 }
 
 function showMine(r, c) {
@@ -94,7 +94,7 @@ function cellContent(r, c) {
         <span
           v-else-if="cellContent(r - 1, c - 1) === 'wrong-flag'"
           class="cell-content leading-none"
-          >🚩<span class="text-red-400">✕</span></span
+          >🚩<span class="text-danger-fg">✕</span></span
         >
       </button>
     </template>

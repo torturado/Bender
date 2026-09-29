@@ -14,7 +14,7 @@ const emit = defineEmits(['restart', 'set-tool'])
   <div class="mx-auto mb-5 grid w-full max-w-[560px] grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] gap-2">
     <button
       type="button"
-      class="min-h-[44px] w-full min-w-0 rounded-md border border-ink-500 bg-ink-800 px-1.5 py-2 text-xs font-bold whitespace-nowrap text-mist-200 transition hover:border-mist-500 hover:text-white sm:px-4 sm:text-sm"
+      class="min-h-[44px] w-full min-w-0 rounded-md border border-ink-500 bg-ink-800 px-1.5 py-2 text-xs font-bold whitespace-nowrap text-mist-200 transition hover:border-mist-500 hover:text-mist-100 sm:px-4 sm:text-sm"
       @click="emit('restart')"
     >
       ↺ Reiniciar
@@ -33,7 +33,7 @@ const emit = defineEmits(['restart', 'set-tool'])
           'min-h-[44px] min-w-0 px-1 py-2 text-xs font-bold whitespace-nowrap transition sm:px-4 sm:text-sm',
           tool === TOOL_PALA
             ? 'bg-orange-500 text-on-accent'
-            : 'bg-ink-800 text-mist-300 hover:text-white',
+            : 'bg-ink-800 text-mist-300 hover:text-mist-100',
         ]"
         @click="emit('set-tool', TOOL_PALA)"
       >
@@ -47,7 +47,7 @@ const emit = defineEmits(['restart', 'set-tool'])
           'min-h-[44px] min-w-0 border-l border-ink-500 px-1 py-2 text-xs font-bold whitespace-nowrap transition sm:px-4 sm:text-sm',
           tool === TOOL_BANDERA
             ? 'bg-orange-500 text-on-accent'
-            : 'bg-ink-800 text-mist-300 hover:text-white',
+            : 'bg-ink-800 text-mist-300 hover:text-mist-100',
         ]"
         @click="emit('set-tool', TOOL_BANDERA)"
       >

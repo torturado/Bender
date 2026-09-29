@@ -82,7 +82,7 @@ function onCell(r, c) {
             :class="[
               'board-cell relative flex aspect-square items-center justify-center rounded-md border transition select-none',
             isError(r - 1, c - 1)
-              ? 'border-red-500 bg-red-500/10 text-red-400 ring-1 ring-red-500'
+              ? 'border-red-500 bg-red-500/10 text-danger-fg ring-1 ring-red-500'
               : isGiven(r - 1, c - 1)
                 ? 'cursor-not-allowed border-ink-600 bg-ink-800'
                 : 'border-ink-500 bg-ink-900 hover:border-orange-400',
@@ -91,7 +91,7 @@ function onCell(r, c) {
         >
             <svg
               v-if="board[r - 1][c - 1] === SUN"
-              class="cell-symbol anim-pop text-amber-300"
+              class="cell-symbol anim-pop text-amber-300 light:text-amber-700"
               viewBox="0 0 24 24"
               aria-hidden="true"
             >
@@ -103,7 +103,7 @@ function onCell(r, c) {
             </svg>
             <svg
               v-else-if="board[r - 1][c - 1] === MOON"
-              class="cell-symbol anim-pop text-sky-300"
+              class="cell-symbol anim-pop text-sky-300 light:text-sky-700"
               viewBox="0 0 24 24"
               aria-hidden="true"
             >
@@ -119,7 +119,7 @@ function onCell(r, c) {
             </svg>
             <span
               v-if="isError(r - 1, c - 1)"
-              class="cell-error anim-fade-up pointer-events-none absolute top-0 right-0.5 font-black text-red-400"
+              class="cell-error anim-fade-up pointer-events-none absolute top-0 right-0.5 font-black text-danger-fg"
               aria-hidden="true"
               >✕</span
             >

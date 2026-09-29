@@ -31,17 +31,17 @@ export const PATCH_COUNT = {
   dificil: [6, 8],
 }
 
-// Paleta de parches sobre el tema oscuro (fondo + texto).
+// Ámbar y lima usan on-accent: sigue oscuro en claro. ink-950 no, porque ahí es el fondo.
 export const PATCH_PALETTE = [
   { bg: 'bg-orange-500/70', text: 'text-white' },
   { bg: 'bg-sky-600/70', text: 'text-white' },
   { bg: 'bg-emerald-600/70', text: 'text-white' },
   { bg: 'bg-violet-600/70', text: 'text-white' },
   { bg: 'bg-rose-600/70', text: 'text-white' },
-  { bg: 'bg-amber-500/70', text: 'text-ink-950' },
+  { bg: 'bg-amber-500/70', text: 'text-on-accent' },
   { bg: 'bg-teal-600/70', text: 'text-white' },
   { bg: 'bg-indigo-500/70', text: 'text-white' },
-  { bg: 'bg-lime-600/70', text: 'text-ink-950' },
+  { bg: 'bg-lime-600/70', text: 'text-on-accent' },
   { bg: 'bg-fuchsia-600/70', text: 'text-white' },
 ]
 
