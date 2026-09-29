@@ -68,7 +68,7 @@ function cellLabel(value, r, c) {
           :key="'cell-' + r + '-' + c"
           role="gridcell"
           :aria-label="cellLabel(value, r, c)"
-          class="flex aspect-square items-center justify-center rounded-md bg-ink-950/60 text-transparent"
+          class="flex aspect-square items-center justify-center rounded-md bg-surface-sunken text-transparent"
         >
           ·
         </div>

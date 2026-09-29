@@ -26,7 +26,7 @@ const emit = defineEmits(['restart', 'undo', 'new-game'])
     </button>
     <button
       type="button"
-      class="min-h-[44px] w-full min-w-0 rounded-md border border-orange-400 bg-orange-500 px-1.5 py-2 text-xs font-bold whitespace-nowrap text-white transition hover:bg-orange-600 sm:px-4 sm:text-sm"
+      class="min-h-[44px] w-full min-w-0 rounded-md border border-orange-400 bg-orange-500 px-1.5 py-2 text-xs font-bold whitespace-nowrap text-on-accent transition hover:bg-orange-400 sm:px-4 sm:text-sm"
       @click="emit('new-game')"
     >
       <span class="sm:hidden">+ Nueva</span>

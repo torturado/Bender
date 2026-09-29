@@ -281,18 +281,18 @@ onBeforeUnmount(() => {
 
           <div class="mb-8 grid grid-cols-2 gap-2">
             <div class="rounded-lg border border-ink-600 bg-ink-800 p-4 text-center">
-              <p class="m-0 text-xs font-bold tracking-wider text-mist-500 uppercase">Tablero</p>
+              <p class="m-0 text-xs font-bold tracking-wider text-mist-400 uppercase">Tablero</p>
               <p class="mt-1 mb-0 text-lg font-extrabold text-white">{{ SIZE }}×{{ SIZE }}</p>
             </div>
             <div class="rounded-lg border border-ink-600 bg-ink-800 p-4 text-center">
-              <p class="m-0 text-xs font-bold tracking-wider text-mist-500 uppercase">Objetivo</p>
+              <p class="m-0 text-xs font-bold tracking-wider text-mist-400 uppercase">Objetivo</p>
               <p class="mt-1 mb-0 text-lg font-extrabold text-white">{{ TARGET }}</p>
             </div>
           </div>
 
           <button
             type="button"
-            class="w-full rounded-md bg-orange-500 px-5 py-3 text-base font-extrabold text-white transition hover:bg-orange-600"
+            class="w-full rounded-md bg-orange-500 px-5 py-3 text-base font-extrabold text-on-accent transition hover:bg-orange-400"
             @click="startGame"
           >
             Jugar

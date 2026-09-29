@@ -289,7 +289,7 @@ function onCellClick({ r, c }) {
         <p class="mt-5 text-center">
           <button
             type="button"
-            class="bg-transparent border-none text-xs font-semibold text-mist-500 underline-offset-2 hover:text-mist-300 hover:underline"
+            class="bg-transparent border-none text-xs font-semibold text-mist-400 underline-offset-2 hover:text-mist-300 hover:underline"
             @click="backToSetup"
           >
             Cambiar configuración (tamaño / dificultad)
@@ -308,7 +308,7 @@ function onCellClick({ r, c }) {
         <p class="mt-5 text-center">
           <button
             type="button"
-            class="bg-transparent border-none text-xs font-semibold text-mist-500 underline-offset-2 hover:text-mist-300 hover:underline"
+            class="bg-transparent border-none text-xs font-semibold text-mist-400 underline-offset-2 hover:text-mist-300 hover:underline"
             @click="backToSetup"
           >
             Cambiar configuración (tamaño / dificultad)

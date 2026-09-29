@@ -90,14 +90,14 @@ onBeforeUnmount(() => {
 <template>
   <div class="contents">
     <div
-      class="fixed inset-x-0 top-0 z-30 flex h-14 items-center justify-between border-b border-ink-700 bg-ink-950/95 px-3 backdrop-blur-md md:hidden"
+      class="fixed inset-x-0 top-0 z-30 flex h-14 items-center justify-between border-b border-ink-700 bg-ink-950 px-3 md:hidden"
     >
       <RouterLink
         to="/"
         class="flex min-h-11 items-center gap-2.5 text-base font-extrabold tracking-tight text-white no-underline"
       >
         <span
-          class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-orange-500 text-xs font-extrabold"
+          class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-orange-500 text-xs font-extrabold text-on-accent"
           aria-hidden="true"
           >BJ</span
         >
@@ -148,7 +148,7 @@ onBeforeUnmount(() => {
             aria-label="Bender Juegos, ir al inicio"
           >
             <span
-              class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-orange-500 text-xs font-extrabold"
+              class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-orange-500 text-xs font-extrabold text-on-accent"
               aria-hidden="true"
               >BJ</span
             >
@@ -248,7 +248,7 @@ onBeforeUnmount(() => {
             <span v-if="showLabels">Inicio</span>
           </RouterLink>
 
-          <div v-if="showLabels" class="px-3 pt-6 pb-2 text-xs font-bold tracking-widest text-mist-500 uppercase">
+          <div v-if="showLabels" class="px-3 pt-6 pb-2 text-xs font-bold tracking-widest text-mist-400 uppercase">
             Juegos
           </div>
           <div v-else class="mx-auto my-3 h-px w-8 bg-ink-700" />
@@ -274,7 +274,7 @@ onBeforeUnmount(() => {
 
         <footer
           v-if="showLabels"
-          class="shrink-0 border-t border-ink-700 px-6 py-4 text-xs leading-relaxed text-mist-500"
+          class="shrink-0 border-t border-ink-700 px-6 py-4 text-xs leading-relaxed text-mist-400"
         >
           <p class="m-0 font-bold text-mist-300">Bender Juegos</p>
           <p class="m-0 mt-1">{{ games.length }} juegos para jugar sin conexión.</p>
@@ -296,7 +296,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .nav-link.active {
-  color: #fff;
+  color: var(--color-on-accent);
   background: var(--color-accent-500);
 }
 

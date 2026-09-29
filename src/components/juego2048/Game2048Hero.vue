@@ -30,7 +30,7 @@ const emit = defineEmits(['restart', 'continue'])
         </button>
         <button
           type="button"
-          class="rounded-md border border-orange-300 bg-orange-500 px-6 py-3 text-base font-extrabold text-white transition hover:bg-orange-600"
+          class="rounded-md border border-orange-300 bg-orange-500 px-6 py-3 text-base font-extrabold text-on-accent transition hover:bg-orange-400"
           @click="emit('continue')"
         >
           ∞ Modo infinito →
@@ -47,7 +47,7 @@ const emit = defineEmits(['restart', 'continue'])
       </p>
       <button
         type="button"
-        class="rounded-md border border-orange-300 bg-orange-500 px-6 py-3 text-base font-extrabold text-white transition hover:bg-orange-600"
+        class="rounded-md border border-orange-300 bg-orange-500 px-6 py-3 text-base font-extrabold text-on-accent transition hover:bg-orange-400"
         @click="emit('restart')"
       >
         ↺ Reiniciar →

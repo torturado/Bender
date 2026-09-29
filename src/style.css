@@ -11,7 +11,8 @@
   --color-ink-600: oklch(29.8% 0.048 285);
   --color-ink-500: oklch(35.2% 0.055 285);
 
-  /* Texto: mist-100 es el principal. */
+  /* Texto: mist-100 es el principal. mist-500 no llega a 4.5:1 sobre
+     ninguna superficie: solo para bordes y decoración, nunca texto. */
   --color-mist-500: oklch(55.5% 0.048 285);
   --color-mist-400: oklch(71.5% 0.036 285);
   --color-mist-300: oklch(80% 0.028 285);
@@ -28,6 +29,18 @@
   --color-orange-400: var(--color-accent-400);
   --color-orange-500: var(--color-accent-500);
   --color-orange-600: var(--color-accent-600);
+
+  /* Texto sobre el acento: 5.91:1 sobre accent-500 y 7.71:1 sobre
+     accent-400, pero 4.00:1 sobre accent-600, así que el hover de un
+     botón de acento aclara en vez de oscurecer. */
+  --color-on-accent: oklch(14.5% 0.022 285);
+
+  /* Mezclas opacas en vez de utilidades con opacidad, para que el color
+     no dependa de lo que haya debajo. */
+  --color-surface-sunken: color-mix(in oklab, var(--color-ink-950) 60%, var(--color-ink-900));
+  --color-accent-soft: color-mix(in oklab, var(--color-accent-500) 15%, var(--color-ink-900));
+  --color-accent-line: color-mix(in oklab, var(--color-accent-500) 40%, var(--color-ink-950));
+  --color-accent-selection: color-mix(in oklab, var(--color-accent-500) 30%, var(--color-ink-900));
 }
 
 @layer base {

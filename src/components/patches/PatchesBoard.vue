@@ -170,11 +170,11 @@ function shapeIcon(shape) {
               'aspect-square rounded border transition-colors',
               previewKeys.has(`${r - 1},${c - 1}`)
                 ? previewState === 'valid'
-                  ? 'border-orange-400 bg-orange-500/30'
+                  ? 'border-orange-400 bg-accent-selection'
                   : previewState === 'unrelated'
                     ? 'border-gray-400 bg-gray-500/20'
                     : 'border-red-500 bg-red-500/20'
-                : 'border-ink-500 bg-ink-950/60 hover:border-mist-500',
+                : 'border-ink-500 bg-surface-sunken hover:border-mist-500',
             ]"
             @pointerdown="onPointerDown($event, r - 1, c - 1)"
           ></div>

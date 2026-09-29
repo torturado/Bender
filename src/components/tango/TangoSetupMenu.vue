@@ -31,7 +31,7 @@ function play() {
         :class="[
           'min-h-[44px] rounded-md border px-3 py-2.5 text-sm font-bold transition',
           size === s
-            ? 'border-orange-400 bg-orange-500 text-white'
+            ? 'border-orange-400 bg-orange-500 text-on-accent'
             : 'border-ink-500 bg-ink-800 text-mist-300 hover:border-mist-500 hover:text-white',
         ]"
         @click="size = s"
@@ -50,7 +50,7 @@ function play() {
         :class="[
           'min-h-[44px] rounded-md border px-3 py-2.5 text-sm font-bold transition',
           difficulty === d.id
-            ? 'border-orange-400 bg-orange-500 text-white'
+            ? 'border-orange-400 bg-orange-500 text-on-accent'
             : 'border-ink-500 bg-ink-800 text-mist-300 hover:border-mist-500 hover:text-white',
         ]"
         @click="difficulty = d.id"
@@ -61,7 +61,7 @@ function play() {
 
     <button
       type="button"
-      class="w-full rounded-md bg-orange-500 px-5 py-3 text-base font-extrabold text-white transition hover:bg-orange-600"
+      class="w-full rounded-md bg-orange-500 px-5 py-3 text-base font-extrabold text-on-accent transition hover:bg-orange-400"
       @click="play"
     >
       Jugar

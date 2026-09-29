@@ -187,7 +187,7 @@ onBeforeUnmount(() => {
           aria-describedby="exit-dialog-description"
         >
           <div
-            class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-orange-500/15 text-2xl"
+            class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-accent-soft text-2xl"
             aria-hidden="true"
           >
             ↩
@@ -209,7 +209,7 @@ onBeforeUnmount(() => {
             <button
               ref="continueButton"
               type="button"
-              class="min-h-12 rounded-lg bg-orange-500 px-5 py-3 font-extrabold text-white transition hover:bg-orange-600"
+              class="min-h-12 rounded-lg bg-orange-500 px-5 py-3 font-extrabold text-on-accent transition hover:bg-orange-400"
               @click="closeExitDialog"
             >
               Seguir jugando

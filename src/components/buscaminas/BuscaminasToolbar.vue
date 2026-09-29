@@ -32,7 +32,7 @@ const emit = defineEmits(['restart', 'set-tool'])
         :class="[
           'min-h-[44px] min-w-0 px-1 py-2 text-xs font-bold whitespace-nowrap transition sm:px-4 sm:text-sm',
           tool === TOOL_PALA
-            ? 'bg-orange-500 text-white'
+            ? 'bg-orange-500 text-on-accent'
             : 'bg-ink-800 text-mist-300 hover:text-white',
         ]"
         @click="emit('set-tool', TOOL_PALA)"
@@ -46,7 +46,7 @@ const emit = defineEmits(['restart', 'set-tool'])
         :class="[
           'min-h-[44px] min-w-0 border-l border-ink-500 px-1 py-2 text-xs font-bold whitespace-nowrap transition sm:px-4 sm:text-sm',
           tool === TOOL_BANDERA
-            ? 'bg-orange-500 text-white'
+            ? 'bg-orange-500 text-on-accent'
             : 'bg-ink-800 text-mist-300 hover:text-white',
         ]"
         @click="emit('set-tool', TOOL_BANDERA)"
