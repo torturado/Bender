@@ -254,7 +254,7 @@ onUnmounted(() => {
         <section
           class="mx-auto w-full max-w-xl rounded-lg border border-ink-500 bg-ink-900 p-6 sm:p-8"
         >
-          <h2 class="m-0 text-xl font-extrabold tracking-tight text-white">Configura tu partida</h2>
+          <h2 class="m-0 text-xl font-extrabold tracking-tight text-mist-100">Configura tu partida</h2>
           <p class="mt-1 mb-6 text-sm text-mist-400">
             Tablero de {{ SIZE }}×{{ SIZE }}. Elige la dificultad antes de empezar.
           </p>
@@ -270,7 +270,7 @@ onUnmounted(() => {
                 'min-h-[44px] rounded-md border px-3 py-2.5 text-sm font-bold transition',
                 setupDifficulty === option.id
                   ? 'border-orange-400 bg-orange-500 text-on-accent'
-                  : 'border-ink-500 bg-ink-800 text-mist-300 hover:border-mist-500 hover:text-white',
+                  : 'border-ink-500 bg-ink-800 text-mist-300 hover:border-mist-500 hover:text-mist-100',
               ]"
               @click="setupDifficulty = option.id"
             >
@@ -308,7 +308,7 @@ onUnmounted(() => {
         />
         <div
           v-if="notice"
-          class="board-alert mx-auto mt-4 w-full max-w-[440px] rounded-md border border-red-500 bg-red-500/10 px-4 py-2.5 text-center text-sm font-bold text-red-400"
+          class="board-alert mx-auto mt-4 w-full max-w-[440px] rounded-md border border-red-500 bg-red-500/10 px-4 py-2.5 text-center text-sm font-bold text-danger-fg"
           role="alert"
         >
           {{ notice }}

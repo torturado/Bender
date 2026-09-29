@@ -309,7 +309,7 @@ function onCellFlag({ r, c }) {
         />
         <div
           v-if="status === 'lost'"
-          class="board-alert mx-auto mb-4 w-full max-w-[560px] rounded-md border border-red-500 bg-red-500/10 px-4 py-3 text-center text-sm font-bold text-red-400"
+          class="board-alert mx-auto mb-4 w-full max-w-[560px] rounded-md border border-red-500 bg-red-500/10 px-4 py-3 text-center text-sm font-bold text-danger-fg"
           role="alert"
         >
           💥 ¡Boom! Pisaste una mina. Pulsa Reiniciar para intentarlo de nuevo.

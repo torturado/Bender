@@ -192,7 +192,7 @@ onBeforeUnmount(() => {
           >
             ↩
           </div>
-          <h2 id="exit-dialog-title" class="m-0 text-2xl font-extrabold text-white">
+          <h2 id="exit-dialog-title" class="m-0 text-2xl font-extrabold text-mist-100">
             ¿Quieres salir del juego?
           </h2>
           <p id="exit-dialog-description" class="mt-3 mb-6 text-mist-300">
@@ -201,7 +201,7 @@ onBeforeUnmount(() => {
           <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <button
               type="button"
-              class="min-h-12 rounded-lg border border-ink-600 px-5 py-3 font-bold text-mist-200 transition hover:bg-ink-800 hover:text-white"
+              class="min-h-12 rounded-lg border border-ink-600 px-5 py-3 font-bold text-mist-200 transition hover:bg-ink-800 hover:text-mist-100"
               @click="confirmExit"
             >
               Salir

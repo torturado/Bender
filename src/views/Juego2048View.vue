@@ -274,7 +274,7 @@ onBeforeUnmount(() => {
         <section
           class="mx-auto w-full max-w-xl rounded-lg border border-ink-500 bg-ink-900 p-6 sm:p-8"
         >
-          <h2 class="m-0 text-xl font-extrabold tracking-tight text-white">Configura tu partida</h2>
+          <h2 class="m-0 text-xl font-extrabold tracking-tight text-mist-100">Configura tu partida</h2>
           <p class="mt-1 mb-6 text-sm text-mist-400">
             Une fichas iguales hasta llegar al {{ TARGET }} en un tablero de {{ SIZE }}×{{ SIZE }}.
           </p>
@@ -282,11 +282,11 @@ onBeforeUnmount(() => {
           <div class="mb-8 grid grid-cols-2 gap-2">
             <div class="rounded-lg border border-ink-600 bg-ink-800 p-4 text-center">
               <p class="m-0 text-xs font-bold tracking-wider text-mist-400 uppercase">Tablero</p>
-              <p class="mt-1 mb-0 text-lg font-extrabold text-white">{{ SIZE }}×{{ SIZE }}</p>
+              <p class="mt-1 mb-0 text-lg font-extrabold text-mist-100">{{ SIZE }}×{{ SIZE }}</p>
             </div>
             <div class="rounded-lg border border-ink-600 bg-ink-800 p-4 text-center">
               <p class="m-0 text-xs font-bold tracking-wider text-mist-400 uppercase">Objetivo</p>
-              <p class="mt-1 mb-0 text-lg font-extrabold text-white">{{ TARGET }}</p>
+              <p class="mt-1 mb-0 text-lg font-extrabold text-mist-100">{{ TARGET }}</p>
             </div>
           </div>
 
@@ -306,7 +306,7 @@ onBeforeUnmount(() => {
       <GamePhase v-else-if="shownStatus === 'playing' || shownStatus === 'endless'">
         <p class="mb-4 text-center text-sm text-mist-400">
           Desliza y combina hasta {{ TARGET }}.
-          <span v-if="shownStatus === 'endless'" class="font-bold text-amber-300">∞ Modo infinito</span>
+          <span v-if="shownStatus === 'endless'" class="font-bold text-amber-300 light:text-amber-700">∞ Modo infinito</span>
           <span v-else class="sm:hidden"> · desliza para mover</span>
           <span v-if="shownStatus !== 'endless'" class="hidden sm:inline"> · flechas o WASD para mover</span>
         </p>

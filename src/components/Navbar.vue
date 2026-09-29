@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { games } from '../data/games.js'
+import ThemeSwitch from './ThemeSwitch.vue'
 
 const STORAGE_KEY = 'bender-sidebar-expanded'
 
@@ -94,7 +95,7 @@ onBeforeUnmount(() => {
     >
       <RouterLink
         to="/"
-        class="flex min-h-11 items-center gap-2.5 text-base font-extrabold tracking-tight text-white no-underline"
+        class="flex min-h-11 items-center gap-2.5 text-base font-extrabold tracking-tight text-mist-100 no-underline"
       >
         <span
           class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-orange-500 text-xs font-extrabold text-on-accent"
@@ -106,7 +107,7 @@ onBeforeUnmount(() => {
       <button
         ref="mobileMenuButton"
         type="button"
-        class="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 font-semibold text-mist-200 hover:bg-ink-800 hover:text-white"
+        class="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 font-semibold text-mist-200 hover:bg-ink-800 hover:text-mist-100"
         :aria-expanded="isMobileOpen"
         :aria-controls="panelId"
         @click="openMobileSidebar"
@@ -128,10 +129,11 @@ onBeforeUnmount(() => {
 
     <aside
       :id="panelId"
-      class="fixed inset-y-0 left-0 z-50 h-dvh w-72 border-r border-ink-700 bg-ink-900 shadow-2xl transition-[width,translate,transform] duration-200 md:sticky md:top-0 md:z-20 md:h-dvh md:translate-x-0 md:shadow-none"
+      class="fixed inset-y-0 left-0 z-50 h-dvh w-72 border-r border-ink-700 bg-ink-900 transition-[width,translate,transform] duration-200 md:sticky md:top-0 md:z-20 md:h-dvh md:translate-x-0"
       :class="[
         isDesktop && !isExpanded ? 'md:w-20' : 'md:w-72',
         !isDesktop && !isMobileOpen ? '-translate-x-full' : 'translate-x-0',
+        !isDesktop && isMobileOpen ? 'shadow-2xl' : '',
       ]"
       :aria-hidden="!isDesktop && !isMobileOpen"
       :inert="!isDesktop && !isMobileOpen"
@@ -144,7 +146,7 @@ onBeforeUnmount(() => {
         >
           <RouterLink
             to="/"
-            class="flex min-h-11 items-center gap-2.5 rounded-lg text-white no-underline"
+            class="flex min-h-11 items-center gap-2.5 rounded-lg text-mist-100 no-underline"
             aria-label="Bender Juegos, ir al inicio"
           >
             <span
@@ -160,7 +162,7 @@ onBeforeUnmount(() => {
             v-if="showLabels"
             ref="closeButton"
             type="button"
-            class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-mist-300 hover:bg-ink-800 hover:text-white"
+            class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-mist-300 hover:bg-ink-800 hover:text-mist-100"
             :aria-label="isDesktop ? 'Contraer menú lateral' : 'Cerrar menú lateral'"
             :aria-expanded="isDesktop ? isExpanded : isMobileOpen"
             :aria-controls="panelId"
@@ -198,7 +200,7 @@ onBeforeUnmount(() => {
           v-if="!showLabels"
           ref="expandButton"
           type="button"
-          class="mx-auto mt-3 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-mist-300 hover:bg-ink-800 hover:text-white"
+          class="mx-auto mt-3 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-mist-300 hover:bg-ink-800 hover:text-mist-100"
           aria-label="Expandir menú lateral"
           :aria-expanded="isExpanded"
           :aria-controls="panelId"
@@ -225,7 +227,7 @@ onBeforeUnmount(() => {
         >
           <RouterLink
             to="/"
-            class="nav-link flex min-h-12 w-full items-center rounded-lg text-[0.95rem] font-semibold text-mist-300 no-underline transition-colors hover:bg-ink-800 hover:text-white"
+            class="nav-link flex min-h-12 w-full items-center rounded-lg text-[0.95rem] font-semibold text-mist-300 no-underline transition-colors hover:bg-ink-800 hover:text-mist-100"
             :class="showLabels ? 'gap-3 px-3' : 'justify-center px-2'"
             active-class="active"
             exact
@@ -257,7 +259,7 @@ onBeforeUnmount(() => {
             v-for="game in games"
             :key="game.id"
             :to="game.route"
-            class="nav-link flex min-h-12 w-full items-center rounded-lg text-[0.95rem] font-semibold text-mist-300 no-underline transition-colors hover:bg-ink-800 hover:text-white"
+            class="nav-link flex min-h-12 w-full items-center rounded-lg text-[0.95rem] font-semibold text-mist-300 no-underline transition-colors hover:bg-ink-800 hover:text-mist-100"
             :class="showLabels ? 'gap-3 px-3' : 'justify-center px-2'"
             active-class="active"
             :title="showLabels ? undefined : game.title"
@@ -273,11 +275,14 @@ onBeforeUnmount(() => {
         </nav>
 
         <footer
-          v-if="showLabels"
-          class="shrink-0 border-t border-ink-700 px-6 py-4 text-xs leading-relaxed text-mist-400"
+          class="shrink-0 border-t border-ink-700"
+          :class="showLabels ? 'px-6 py-4 text-xs leading-relaxed text-mist-400' : 'flex justify-center px-2 py-3'"
         >
-          <p class="m-0 font-bold text-mist-300">Bender Juegos</p>
-          <p class="m-0 mt-1">{{ games.length }} juegos para jugar sin conexión.</p>
+          <ThemeSwitch :compact="!showLabels" :class="showLabels ? 'mb-3' : ''" />
+          <template v-if="showLabels">
+            <p class="m-0 font-bold text-mist-300">Bender Juegos</p>
+            <p class="m-0 mt-1">{{ games.length }} juegos para jugar sin conexión.</p>
+          </template>
         </footer>
       </div>
     </aside>

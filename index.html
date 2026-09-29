@@ -11,6 +11,20 @@
     <meta name="apple-mobile-web-app-title" content="Bender" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>Bender Juegos — Menú de inicio</title>
+    <script>
+      // Tema antes del primer pintado, para que no parpadee. Repite la
+      // lógica de src/theme.js, que toma el relevo al arrancar la app.
+      try {
+        var theme = localStorage.getItem('bender-theme')
+        if (theme !== 'light' && theme !== 'dark') {
+          theme = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+        }
+        document.documentElement.dataset.theme = theme
+        if (theme === 'light') {
+          document.querySelector('meta[name="theme-color"]').content = '#fafafd'
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="app"></div>

@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Para los pocos colores de página que no tienen token propio. */
+@custom-variant light (&:where([data-theme="light"], [data-theme="light"] *));
+
 @theme {
   --font-sans: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 
@@ -35,6 +38,11 @@
      botón de acento aclara en vez de oscurecer. */
   --color-on-accent: oklch(14.5% 0.022 285);
 
+  /* Roles que cambian de valor en el modo claro. */
+  --color-accent-fg: var(--color-accent-400);
+  --color-focus: var(--color-accent-400);
+  --color-danger-fg: var(--color-red-400);
+
   /* Mezclas opacas en vez de utilidades con opacidad, para que el color
      no dependa de lo que haya debajo. */
   --color-surface-sunken: color-mix(in oklab, var(--color-ink-950) 60%, var(--color-ink-900));
@@ -51,6 +59,27 @@
     color-scheme: dark;
     color: var(--color-mist-100);
     background-color: var(--color-ink-950);
+  }
+
+  /* Modo claro: los nombres se quedan y los roles se invierten. ink sigue
+     siendo la superficie y mist el texto, así que ink-950 pasa a ser el
+     fondo claro y mist-100 el texto oscuro. El acento no cambia. */
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --color-ink-950: oklch(98.5% 0.004 285);
+    --color-ink-900: oklch(96.8% 0.008 285);
+    --color-ink-800: oklch(94.2% 0.013 285);
+    --color-ink-700: oklch(91.5% 0.017 285);
+    --color-ink-600: oklch(89% 0.02 285);
+    --color-ink-500: oklch(83% 0.026 285);
+    --color-mist-500: oklch(62% 0.04 285);
+    --color-mist-400: oklch(50% 0.045 285);
+    --color-mist-300: oklch(43% 0.045 285);
+    --color-mist-200: oklch(36% 0.04 285);
+    --color-mist-100: oklch(23% 0.035 285);
+    --color-accent-fg: oklch(50% 0.13 50);
+    --color-focus: var(--color-accent-600);
+    --color-danger-fg: var(--color-red-700);
   }
 
   /* Movimiento: siempre corto y discreto. El bloque de
@@ -86,7 +115,7 @@
 
   /* Foco visible para navegación por teclado */
   :focus-visible {
-    outline: 2px solid var(--color-orange-400, #fb923c);
+    outline: 2px solid var(--color-focus);
     outline-offset: 2px;
   }
 }
@@ -246,6 +275,13 @@
     opacity: 1;
     transform: scale(1);
   }
+}
+
+/* Lo pone y lo quita applyTheme (src/theme.js) al cambiar de tema. */
+:root[data-theme-switching] *,
+:root[data-theme-switching] *::before,
+:root[data-theme-switching] *::after {
+  transition: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

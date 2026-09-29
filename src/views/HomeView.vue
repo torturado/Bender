@@ -7,7 +7,7 @@ import { games } from '../data/games.js'
   <main class="mx-auto w-full max-w-[1200px] px-4 pt-8 pb-10 sm:px-6 sm:pt-10 sm:pb-14">
     <section class="mb-7 text-center sm:mb-9">
       <h1
-        class="m-0 mb-2 text-[clamp(2rem,5vw,3.25rem)] font-extrabold tracking-tight text-white"
+        class="m-0 mb-2 text-[clamp(2rem,5vw,3.25rem)] font-extrabold tracking-tight text-mist-100"
       >
         Elige tu juego
       </h1>

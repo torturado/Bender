@@ -270,7 +270,7 @@ function onCellClick({ r, c }) {
       <GamePhase v-else-if="status === 'playing'">
         <p class="mb-4 text-center text-sm text-mist-400">
           {{ size }}×{{ size }} · {{ difficultyLabel(difficulty) }} · lo que incumple las reglas
-          se marca en <span class="font-bold text-red-400">rojo con una ✕</span>
+          se marca en <span class="font-bold text-danger-fg">rojo con una ✕</span>
         </p>
         <TangoToolbar
           :can-undo="history.length > 0"

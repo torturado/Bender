@@ -48,7 +48,7 @@ function onCell(r, c) {
   <div class="game-board-frame tango-board-frame mx-auto">
     <p class="board-instructions mb-3 text-center text-mist-400">
       Cada fila y columna lleva {{ half }}
-      <svg class="inline-icon text-amber-300" viewBox="0 0 24 24" aria-hidden="true">
+      <svg class="inline-icon text-amber-300 light:text-amber-700" viewBox="0 0 24 24" aria-hidden="true">
         <circle cx="12" cy="12" r="4.8" fill="currentColor" />
         <path
           class="cell-symbol-rays"
@@ -56,7 +56,7 @@ function onCell(r, c) {
         />
       </svg>
       y {{ half }}
-      <svg class="inline-icon text-sky-300" viewBox="0 0 24 24" aria-hidden="true">
+      <svg class="inline-icon text-sky-300 light:text-sky-700" viewBox="0 0 24 24" aria-hidden="true">
         <path
           fill="currentColor"
           d="M20.6 14.6A8.9 8.9 0 1 1 9.4 3.4a7.2 7.2 0 0 0 11.2 11.2Z"

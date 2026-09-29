@@ -13,7 +13,7 @@ const emit = defineEmits(['undo', 'restart', 'new-game'])
 <template>
   <div class="mx-auto mb-5 grid w-full max-w-[440px] grid-cols-3 gap-2">
     <span
-      class="col-span-3 justify-self-center rounded-full border border-accent-line bg-accent-soft px-4 py-1 text-[0.85rem] font-bold text-orange-400"
+      class="col-span-3 justify-self-center rounded-full border border-accent-line bg-accent-soft px-4 py-1 text-[0.85rem] font-bold text-accent-fg"
     >
       {{ difficultyLabel(difficulty) }} · aleatoria
     </span>
