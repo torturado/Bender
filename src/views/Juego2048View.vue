@@ -345,7 +345,7 @@ onBeforeUnmount(() => {
 <style scoped>
 @import './game-page.css';
 .game-header.juego2048 {
-  background-color: #0c4a6e;
-  border-color: #fb923c;
+  background-color: var(--game-2048);
+  border-color: var(--game-2048-border);
 }
 </style>

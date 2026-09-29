@@ -363,7 +363,7 @@ function onCellFlag({ r, c }) {
 <style scoped>
 @import './game-page.css';
 .game-header.buscaminas {
-  background-color: #9a3412;
-  border-color: #fdba74;
+  background-color: var(--game-buscaminas);
+  border-color: var(--game-buscaminas-border);
 }
 </style>

@@ -322,7 +322,7 @@ function onCellClick({ r, c }) {
 <style scoped>
 @import './game-page.css';
 .game-header.tango {
-  background-color: #14532d;
-  border-color: #fb923c;
+  background-color: var(--game-tango);
+  border-color: var(--game-tango-border);
 }
 </style>

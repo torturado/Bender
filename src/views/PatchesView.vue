@@ -330,7 +330,7 @@ onUnmounted(() => {
 <style scoped>
 @import './game-page.css';
 .game-header.patches {
-  background-color: #5b21b6;
-  border-color: #fb923c;
+  background-color: var(--game-patches);
+  border-color: var(--game-patches-border);
 }
 </style>
