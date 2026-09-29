@@ -38,23 +38,31 @@ export function newGame() {
   return board
 }
 
-/** Desliza una línea hacia la izquierda fusionando una sola vez por ficha. Devuelve { line, gained }. */
+/** Desliza una línea fusionando una sola vez por ficha. Devuelve { line, sources, gained }. */
 export function slideLine(line) {
-  const tiles = line.filter((v) => v !== 0)
+  const tiles = line
+    .map((value, index) => ({ value, index }))
+    .filter(({ value }) => value !== 0)
   const out = []
+  const sources = []
   let gained = 0
   for (let i = 0; i < tiles.length; i++) {
-    if (i + 1 < tiles.length && tiles[i] === tiles[i + 1]) {
-      const merged = tiles[i] * 2
+    if (i + 1 < tiles.length && tiles[i].value === tiles[i + 1].value) {
+      const merged = tiles[i].value * 2
       out.push(merged)
+      sources.push([tiles[i].index, tiles[i + 1].index])
       gained += merged
       i++
     } else {
-      out.push(tiles[i])
+      out.push(tiles[i].value)
+      sources.push([tiles[i].index])
     }
   }
-  while (out.length < SIZE) out.push(0)
-  return { line: out, gained }
+  while (out.length < SIZE) {
+    out.push(0)
+    sources.push([])
+  }
+  return { line: out, sources, gained }
 }
 
 function linesFor(board, dir) {
@@ -74,23 +82,31 @@ function linesFor(board, dir) {
 }
 
 /**
- * Aplica un movimiento. NO spawnea: devuelve { board, gained, changed }.
+ * Aplica un movimiento. NO spawnea: devuelve { board, gained, changed, moves }.
  * La vista spawnea solo si changed (y guarda historial solo entonces).
  */
 export function move(board, dir) {
   const next = cloneBoard(board)
   let gained = 0
   let changed = false
+  const moves = []
   for (const line of linesFor(board, dir)) {
     const values = line.map(([r, c]) => board[r][c])
-    const { line: slid, gained: g } = slideLine(values)
+    const { line: slid, sources, gained: g } = slideLine(values)
     gained += g
     line.forEach(([r, c], i) => {
       if (next[r][c] !== slid[i]) changed = true
       next[r][c] = slid[i]
+      for (const sourceIndex of sources[i]) {
+        moves.push({
+          from: [...line[sourceIndex]],
+          to: [r, c],
+          merged: sources[i].length > 1,
+        })
+      }
     })
   }
-  return { board: next, gained, changed }
+  return { board: next, gained, changed, moves }
 }
 
 /** ¿Existe algún movimiento legal? */

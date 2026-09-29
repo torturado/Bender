@@ -170,11 +170,11 @@ function shapeIcon(shape) {
               'aspect-square rounded border transition-colors',
               previewKeys.has(`${r - 1},${c - 1}`)
                 ? previewState === 'valid'
-                  ? 'border-orange-400 bg-orange-500/30'
+                  ? 'border-orange-400 bg-accent-selection'
                   : previewState === 'unrelated'
                     ? 'border-gray-400 bg-gray-500/20'
                     : 'border-red-500 bg-red-500/20'
-                : 'border-ink-500 bg-ink-950/60 hover:border-mist-500',
+                : 'border-ink-500 bg-surface-sunken hover:border-mist-500',
             ]"
             @pointerdown="onPointerDown($event, r - 1, c - 1)"
           ></div>
@@ -188,13 +188,13 @@ function shapeIcon(shape) {
           :key="'patch-' + o.id"
           :style="o.style"
           :class="o.state === 'valid'
-            ? ['patch-overlay absolute flex items-center justify-center rounded-lg', o.palette.bg, o.palette.text]
+            ? ['patch-overlay anim-pop-sm absolute flex items-center justify-center rounded-lg', o.palette.bg, o.palette.text]
             : o.state === 'unrelated'
-              ? 'patch-overlay patch-overlay--unrelated absolute flex items-center justify-center rounded-lg border border-gray-400/60 bg-gray-500/35 text-mist-200'
-              : 'patch-overlay patch-overlay--invalid absolute flex items-center justify-center rounded-lg border-2 border-red-500 bg-red-500/20 text-red-100 ring-2 ring-red-500/30'"
+              ? 'patch-overlay patch-overlay--unrelated anim-pop-sm absolute flex items-center justify-center rounded-lg border border-gray-400/60 bg-gray-500/35 text-mist-200'
+              : 'patch-overlay patch-overlay--invalid anim-pop-sm absolute flex items-center justify-center rounded-lg border-2 border-red-500 bg-red-500/20 text-danger-fg ring-2 ring-red-500/30'"
         >
           <span
-            :class="['patch-area-number font-extrabold drop-shadow-md', o.state === 'valid' ? o.palette.text : o.state === 'unrelated' ? 'text-mist-200' : 'text-red-100']"
+            :class="['patch-area-number font-extrabold drop-shadow-md', o.state === 'valid' ? o.palette.text : o.state === 'unrelated' ? 'text-mist-200' : 'text-danger-fg']"
             >{{ o.area }}</span
           >
           <span
@@ -218,7 +218,7 @@ function shapeIcon(shape) {
                 : 'border-red-400',
           ]"
         >
-          <span class="patch-area-number font-extrabold text-white drop-shadow-md">{{
+          <span class="patch-area-number font-extrabold text-mist-100 drop-shadow-md">{{
             previewOverlay.area
           }}</span>
         </div>

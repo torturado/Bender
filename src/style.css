@@ -1,22 +1,54 @@
 @import "tailwindcss";
 
+/* Para los pocos colores de página que no tienen token propio. */
+@custom-variant light (&:where([data-theme="light"], [data-theme="light"] *));
+
 @theme {
   --font-sans: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 
-  /* Fondo base de la app (antes #0a0c14 hardcodeado) */
-  --color-ink-950: #0a0c14;
-  --color-ink-900: #121627;
-  --color-ink-800: #1c2135;
-  --color-ink-700: #22263a;
-  --color-ink-600: #1e2438;
-  --color-ink-500: #2c334d;
+  /* Superficies: ink-950 es el fondo de la página; ink-500, el borde. */
+  --color-ink-950: oklch(14.5% 0.022 285);
+  --color-ink-900: oklch(19.2% 0.03 285);
+  --color-ink-800: oklch(23.6% 0.038 285);
+  --color-ink-700: oklch(26.8% 0.043 285);
+  --color-ink-600: oklch(29.8% 0.048 285);
+  --color-ink-500: oklch(35.2% 0.055 285);
 
-  /* Grises de texto (antes #5b6178, #8b90a7, etc.) */
-  --color-mist-500: #5b6178;
-  --color-mist-400: #8b90a7;
-  --color-mist-300: #aab0c5;
-  --color-mist-200: #c9cede;
-  --color-mist-100: #e8eaf2;
+  /* Texto: mist-100 es el principal. mist-500 no llega a 4.5:1 sobre
+     ninguna superficie: solo para bordes y decoración, nunca texto. */
+  --color-mist-500: oklch(55.5% 0.048 285);
+  --color-mist-400: oklch(71.5% 0.036 285);
+  --color-mist-300: oklch(80% 0.028 285);
+  --color-mist-200: oklch(87.8% 0.019 285);
+  --color-mist-100: oklch(96.2% 0.009 285);
+
+  /* Acento. Pisa el naranja de Tailwind para que los orange-* de los
+     componentes lo recojan sin tocarlos. */
+  --color-accent-300: #ecb166;
+  --color-accent-400: #e28e3a;
+  --color-accent-500: #d87022;
+  --color-accent-600: #b7521f;
+  --color-orange-300: var(--color-accent-300);
+  --color-orange-400: var(--color-accent-400);
+  --color-orange-500: var(--color-accent-500);
+  --color-orange-600: var(--color-accent-600);
+
+  /* Texto sobre el acento: 5.91:1 sobre accent-500 y 7.71:1 sobre
+     accent-400, pero 4.00:1 sobre accent-600, así que el hover de un
+     botón de acento aclara en vez de oscurecer. */
+  --color-on-accent: oklch(14.5% 0.022 285);
+
+  /* Roles que cambian de valor en el modo claro. */
+  --color-accent-fg: var(--color-accent-400);
+  --color-focus: var(--color-accent-400);
+  --color-danger-fg: var(--color-red-400);
+
+  /* Mezclas opacas en vez de utilidades con opacidad, para que el color
+     no dependa de lo que haya debajo. */
+  --color-surface-sunken: color-mix(in oklab, var(--color-ink-950) 60%, var(--color-ink-900));
+  --color-accent-soft: color-mix(in oklab, var(--color-accent-500) 15%, var(--color-ink-900));
+  --color-accent-line: color-mix(in oklab, var(--color-accent-500) 40%, var(--color-ink-950));
+  --color-accent-selection: color-mix(in oklab, var(--color-accent-500) 30%, var(--color-ink-900));
 }
 
 @layer base {
@@ -29,6 +61,38 @@
     background-color: var(--color-ink-950);
   }
 
+  /* Modo claro: los nombres se quedan y los roles se invierten. ink sigue
+     siendo la superficie y mist el texto, así que ink-950 pasa a ser el
+     fondo claro y mist-100 el texto oscuro. El acento no cambia. */
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --color-ink-950: oklch(98.5% 0.004 285);
+    --color-ink-900: oklch(96.8% 0.008 285);
+    --color-ink-800: oklch(94.2% 0.013 285);
+    --color-ink-700: oklch(91.5% 0.017 285);
+    --color-ink-600: oklch(89% 0.02 285);
+    --color-ink-500: oklch(83% 0.026 285);
+    --color-mist-500: oklch(62% 0.04 285);
+    --color-mist-400: oklch(50% 0.045 285);
+    --color-mist-300: oklch(43% 0.045 285);
+    --color-mist-200: oklch(36% 0.04 285);
+    --color-mist-100: oklch(23% 0.035 285);
+    --color-accent-fg: oklch(50% 0.13 50);
+    --color-focus: var(--color-accent-600);
+    --color-danger-fg: var(--color-red-700);
+  }
+
+  /* Movimiento: siempre corto y discreto. El bloque de
+     prefers-reduced-motion de abajo anula todo lo que use estos tokens. */
+  :root {
+    --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --dur-out: 120ms;
+    --dur-in: 200ms;
+    --dur-slide: 100ms;
+    --dur-pop: 180ms;
+  }
+
   body {
     margin: 0;
     min-width: 320px;
@@ -36,6 +100,14 @@
     background:
       radial-gradient(1000px 400px at 20% -5%, rgba(66, 184, 131, 0.12), transparent),
       radial-gradient(900px 380px at 85% 0%, rgba(100, 108, 255, 0.12), transparent),
+      var(--color-ink-950);
+  }
+
+  /* En claro esos mismos velos se leen como manchas. Más cortos y más suaves. */
+  :root[data-theme="light"] body {
+    background:
+      radial-gradient(900px 360px at 18% -8%, rgba(216, 112, 34, 0.1), transparent),
+      radial-gradient(800px 340px at 88% -4%, rgba(100, 108, 255, 0.08), transparent),
       var(--color-ink-950);
   }
 
@@ -51,9 +123,173 @@
 
   /* Foco visible para navegación por teclado */
   :focus-visible {
-    outline: 2px solid var(--color-orange-400, #fb923c);
+    outline: 2px solid var(--color-focus);
     outline-offset: 2px;
   }
+}
+
+/* Clases de <Transition> para el cambio de vista (ver App.vue).
+   Solo transform + opacity: animar left/top o height provoca layout
+   en cada frame y se nota en gama baja. */
+@layer components {
+  .page-forward-enter-active,
+  .page-forward-leave-active,
+  .page-back-enter-active,
+  .page-back-leave-active,
+  .page-fade-enter-active,
+  .page-fade-leave-active {
+    transition:
+      opacity var(--dur-out) var(--ease-out-soft),
+      transform var(--dur-out) var(--ease-out-soft);
+  }
+
+  .page-forward-enter-active,
+  .page-back-enter-active,
+  .page-fade-enter-active {
+    transition-duration: var(--dur-in);
+  }
+
+  /* Entrar a un juego: la vista viene de abajo, como si empujara. */
+  .page-forward-enter-from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  .page-forward-enter-to,
+  .page-forward-leave-from,
+  .page-back-enter-to,
+  .page-back-leave-from,
+  .page-fade-enter-to,
+  .page-fade-leave-from {
+    opacity: 1;
+    transform: none;
+  }
+
+  .page-forward-leave-to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  /* Volver atrás: la vista se retira hacia abajo. */
+  .page-back-enter-from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  .page-back-leave-to {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  /* Entre dos juegos: sin dirección, solo crossfade. */
+  .page-fade-enter-from,
+  .page-fade-leave-to {
+    opacity: 0;
+    transform: none;
+  }
+
+  /* Aparición de contenido suelta (tarjetas, celdas, chips).
+     fill-mode backwards y no both a propósito: con both el transform
+     final se queda aplicado y anula los hover:translate-* de la tarjeta,
+     porque una animación gana en la cascada a una declaración normal. */
+  .anim-pop {
+    animation: bender-pop var(--dur-pop) var(--ease-pop) backwards;
+  }
+
+  .anim-fade-up {
+    animation: bender-fade-up var(--dur-in) var(--ease-out-soft) backwards;
+  }
+
+  /* Versión suave, para superficies grandes (parches de Patches) donde
+     un scale(0.6) queda exagerado. */
+  .anim-pop-sm {
+    animation: bender-pop-sm var(--dur-pop) var(--ease-pop) backwards;
+  }
+
+  /* Avisos dentro del juego (💥 en Buscaminas, mensaje en Patches). */
+  .board-alert {
+    animation: bender-fade-up var(--dur-in) var(--ease-out-soft) backwards;
+  }
+
+  /* Cambio de fase dentro de un juego (configuración → jugando → victoria).
+     Cada rama de la vista es un GamePhase, así que estas clases las
+     aplicó Vue al elemento real y no hay problema de ámbito. */
+  .phase-enter-active,
+  .phase-leave-active {
+    transition:
+      opacity var(--dur-out) var(--ease-out-soft),
+      transform var(--dur-out) var(--ease-out-soft);
+  }
+
+  .phase-enter-active {
+    transition-duration: var(--dur-in);
+  }
+
+  .phase-enter-from,
+  .phase-leave-to {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+
+  .phase-enter-to,
+  .phase-leave-from {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* La victoria (y la derrota) entran con un punto más de escala: es el
+     momento que merece una pizca de énfasis, sin salirse del tono
+     discreto. Dos clases ganan a .phase-enter-from. */
+  .phase-enter-from.game-phase--won {
+    transform: scale(0.94);
+  }
+
+  .phase-leave-to.game-phase--won {
+    transform: scale(0.97);
+  }
+}
+
+@keyframes bender-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bender-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes bender-pop-sm {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Lo pone y lo quita applyTheme (src/theme.js) al cambiar de tema. */
+:root[data-theme-switching] *,
+:root[data-theme-switching] *::before,
+:root[data-theme-switching] *::after {
+  transition: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

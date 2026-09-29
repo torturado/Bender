@@ -13,28 +13,28 @@ const emit = defineEmits(['undo', 'restart', 'new-game'])
 <template>
   <div class="mx-auto mb-5 grid w-full max-w-[440px] grid-cols-3 gap-2">
     <span
-      class="col-span-3 justify-self-center rounded-full border border-orange-500/40 bg-orange-500/10 px-4 py-1 text-[0.85rem] font-bold text-orange-400"
+      class="col-span-3 justify-self-center rounded-full border border-accent-line bg-accent-soft px-4 py-1 text-[0.85rem] font-bold text-accent-fg"
     >
       {{ difficultyLabel(difficulty) }} · aleatoria
     </span>
     <button
       type="button"
       :disabled="!canUndo"
-      class="min-h-[44px] w-full min-w-0 rounded-md border border-ink-500 bg-ink-800 px-1.5 py-2 text-xs font-bold whitespace-nowrap text-mist-200 transition hover:border-mist-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 sm:px-4 sm:text-sm"
+      class="min-h-[44px] w-full min-w-0 rounded-md border border-ink-500 bg-ink-800 px-1.5 py-2 text-xs font-bold whitespace-nowrap text-mist-200 transition hover:border-mist-500 hover:text-mist-100 disabled:cursor-not-allowed disabled:opacity-40 sm:px-4 sm:text-sm"
       @click="emit('undo')"
     >
       ↩ Deshacer
     </button>
     <button
       type="button"
-      class="min-h-[44px] w-full min-w-0 rounded-md border border-ink-500 bg-ink-800 px-1.5 py-2 text-xs font-bold whitespace-nowrap text-mist-200 transition hover:border-mist-500 hover:text-white sm:px-4 sm:text-sm"
+      class="min-h-[44px] w-full min-w-0 rounded-md border border-ink-500 bg-ink-800 px-1.5 py-2 text-xs font-bold whitespace-nowrap text-mist-200 transition hover:border-mist-500 hover:text-mist-100 sm:px-4 sm:text-sm"
       @click="emit('restart')"
     >
       ↺ Reiniciar
     </button>
     <button
       type="button"
-      class="min-h-[44px] w-full min-w-0 rounded-md border border-orange-400 bg-orange-500 px-1.5 py-2 text-xs font-bold whitespace-nowrap text-white transition hover:bg-orange-600 sm:px-4 sm:text-sm"
+      class="min-h-[44px] w-full min-w-0 rounded-md border border-orange-400 bg-orange-500 px-1.5 py-2 text-xs font-bold whitespace-nowrap text-on-accent transition hover:bg-orange-400 sm:px-4 sm:text-sm"
       @click="emit('new-game')"
     >
       <span class="sm:hidden">+ Nueva</span>
@@ -42,7 +42,7 @@ const emit = defineEmits(['undo', 'restart', 'new-game'])
     </button>
     <span
       v-if="moves > 0"
-      class="col-span-3 text-center text-xs text-mist-400"
+      class="anim-fade-up col-span-3 text-center text-xs text-mist-400"
     >
       {{ moves }} movimiento{{ moves === 1 ? '' : 's' }}
     </span>

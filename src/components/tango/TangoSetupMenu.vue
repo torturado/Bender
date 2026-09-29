@@ -14,7 +14,7 @@ function play() {
 
 <template>
   <section class="mx-auto w-full max-w-xl rounded-lg border border-ink-500 bg-ink-900 p-6 sm:p-8">
-    <h2 class="m-0 text-xl font-extrabold tracking-tight text-white">Configura tu partida</h2>
+    <h2 class="m-0 text-xl font-extrabold tracking-tight text-mist-100">Configura tu partida</h2>
     <p class="mt-1 mb-6 text-sm text-mist-400">
       Elige tamaño y dificultad. Cada partida genera un tablero distinto.
     </p>
@@ -31,8 +31,8 @@ function play() {
         :class="[
           'min-h-[44px] rounded-md border px-3 py-2.5 text-sm font-bold transition',
           size === s
-            ? 'border-orange-400 bg-orange-500 text-white'
-            : 'border-ink-500 bg-ink-800 text-mist-300 hover:border-mist-500 hover:text-white',
+            ? 'border-orange-400 bg-orange-500 text-on-accent'
+            : 'border-ink-500 bg-ink-800 text-mist-300 hover:border-mist-500 hover:text-mist-100',
         ]"
         @click="size = s"
       >
@@ -50,8 +50,8 @@ function play() {
         :class="[
           'min-h-[44px] rounded-md border px-3 py-2.5 text-sm font-bold transition',
           difficulty === d.id
-            ? 'border-orange-400 bg-orange-500 text-white'
-            : 'border-ink-500 bg-ink-800 text-mist-300 hover:border-mist-500 hover:text-white',
+            ? 'border-orange-400 bg-orange-500 text-on-accent'
+            : 'border-ink-500 bg-ink-800 text-mist-300 hover:border-mist-500 hover:text-mist-100',
         ]"
         @click="difficulty = d.id"
       >
@@ -61,7 +61,7 @@ function play() {
 
     <button
       type="button"
-      class="w-full rounded-md bg-orange-500 px-5 py-3 text-base font-extrabold text-white transition hover:bg-orange-600"
+      class="w-full rounded-md bg-orange-500 px-5 py-3 text-base font-extrabold text-on-accent transition hover:bg-orange-400"
       @click="play"
     >
       Jugar

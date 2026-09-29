@@ -17,16 +17,16 @@ const emit = defineEmits(['cell-click', 'cell-flag'])
 
 const interactive = computed(() => props.status === 'playing')
 
-// Colores clásicos de números adaptados al tema oscuro.
+// En claro los *-300/*-400 se lavan sobre la casilla clara: bajan a *-700.
 const NUMBER_CLASSES = {
-  1: 'text-sky-400',
-  2: 'text-green-400',
-  3: 'text-red-400',
-  4: 'text-violet-400',
-  5: 'text-amber-400',
-  6: 'text-teal-300',
-  7: 'text-white',
-  8: 'text-mist-400',
+  1: 'text-sky-400 light:text-sky-700',
+  2: 'text-green-400 light:text-green-700',
+  3: 'text-red-400 light:text-red-700',
+  4: 'text-violet-400 light:text-violet-700',
+  5: 'text-amber-400 light:text-amber-700',
+  6: 'text-teal-300 light:text-teal-700',
+  7: 'text-mist-100',
+  8: 'text-mist-400 light:text-mist-200',
 }
 
 function showMine(r, c) {
@@ -68,25 +68,33 @@ function cellContent(r, c) {
             : cellContent(r - 1, c - 1) === 'wrong-flag'
               ? 'border-red-500 bg-red-500/15'
               : exploded && exploded.r === r - 1 && exploded.c === c - 1
-                ? 'border-red-500 bg-red-600'
+                ? 'cell-boom border-red-500 bg-red-600'
                 : 'cursor-default border-ink-600 bg-ink-950',
           !interactive ? 'hover:border-ink-500' : '',
         ]"
         @click="emit('cell-click', { r: r - 1, c: c - 1 })"
         @contextmenu.prevent="emit('cell-flag', { r: r - 1, c: c - 1 })"
       >
-        <span v-if="cellContent(r - 1, c - 1) === 'mine'" class="cell-content leading-none">💣</span>
+        <span
+          v-if="cellContent(r - 1, c - 1) === 'mine'"
+          class="cell-content anim-pop leading-none"
+          >💣</span
+        >
         <span
           v-else-if="cellContent(r - 1, c - 1) === 'number'"
-          class="cell-content leading-none"
+          class="cell-content anim-pop leading-none"
           :class="NUMBER_CLASSES[numbers[r - 1][c - 1]]"
           >{{ numbers[r - 1][c - 1] }}</span
         >
-        <span v-else-if="cellContent(r - 1, c - 1) === 'flag'" class="cell-content leading-none">🚩</span>
+        <span
+          v-else-if="cellContent(r - 1, c - 1) === 'flag'"
+          class="cell-content anim-pop leading-none"
+          >🚩</span
+        >
         <span
           v-else-if="cellContent(r - 1, c - 1) === 'wrong-flag'"
           class="cell-content leading-none"
-          >🚩<span class="text-red-400">✕</span></span
+          >🚩<span class="text-danger-fg">✕</span></span
         >
       </button>
     </template>
@@ -101,5 +109,34 @@ function cellContent(r, c) {
 .cell-content {
   font-size: clamp(0.55rem, 32cqw, 1.25rem);
   line-height: 1;
+}
+
+/* La mina que te ha matado tiembla una vez al perder. Solo se anima
+   transform: un tablero de 16x30 con box-shadow animado se arrastra. */
+.cell-boom {
+  animation: cell-boom 420ms var(--ease-out-soft) both;
+}
+
+@keyframes cell-boom {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  15% {
+    transform: translateX(-5px);
+  }
+
+  35% {
+    transform: translateX(4px);
+  }
+
+  55% {
+    transform: translateX(-3px);
+  }
+
+  75% {
+    transform: translateX(2px);
+  }
 }
 </style>
