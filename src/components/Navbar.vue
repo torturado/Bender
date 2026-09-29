@@ -297,11 +297,11 @@ onBeforeUnmount(() => {
 <style scoped>
 .nav-link.active {
   color: #fff;
-  background: #f97316;
+  background: var(--color-accent-500);
 }
 
 .nav-link.active:hover {
-  background: #f97316;
+  background: var(--color-accent-500);
 }
 
 .drawer-backdrop-enter-active,

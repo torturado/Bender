@@ -3,20 +3,31 @@
 @theme {
   --font-sans: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 
-  /* Fondo base de la app (antes #0a0c14 hardcodeado) */
-  --color-ink-950: #0a0c14;
-  --color-ink-900: #121627;
-  --color-ink-800: #1c2135;
-  --color-ink-700: #22263a;
-  --color-ink-600: #1e2438;
-  --color-ink-500: #2c334d;
+  /* Superficies: ink-950 es el fondo de la página; ink-500, el borde. */
+  --color-ink-950: oklch(14.5% 0.022 285);
+  --color-ink-900: oklch(19.2% 0.03 285);
+  --color-ink-800: oklch(23.6% 0.038 285);
+  --color-ink-700: oklch(26.8% 0.043 285);
+  --color-ink-600: oklch(29.8% 0.048 285);
+  --color-ink-500: oklch(35.2% 0.055 285);
 
-  /* Grises de texto (antes #5b6178, #8b90a7, etc.) */
-  --color-mist-500: #5b6178;
-  --color-mist-400: #8b90a7;
-  --color-mist-300: #aab0c5;
-  --color-mist-200: #c9cede;
-  --color-mist-100: #e8eaf2;
+  /* Texto: mist-100 es el principal. */
+  --color-mist-500: oklch(55.5% 0.048 285);
+  --color-mist-400: oklch(71.5% 0.036 285);
+  --color-mist-300: oklch(80% 0.028 285);
+  --color-mist-200: oklch(87.8% 0.019 285);
+  --color-mist-100: oklch(96.2% 0.009 285);
+
+  /* Acento. Pisa el naranja de Tailwind para que los orange-* de los
+     componentes lo recojan sin tocarlos. */
+  --color-accent-300: #ecb166;
+  --color-accent-400: #e28e3a;
+  --color-accent-500: #d87022;
+  --color-accent-600: #b7521f;
+  --color-orange-300: var(--color-accent-300);
+  --color-orange-400: var(--color-accent-400);
+  --color-orange-500: var(--color-accent-500);
+  --color-orange-600: var(--color-accent-600);
 }
 
 @layer base {
