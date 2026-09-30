@@ -1,4 +1,6 @@
 <script setup>
+import GameIcon from './GameIcon.vue'
+
 defineProps({
   game: {
     type: Object,
@@ -8,20 +10,63 @@ defineProps({
 </script>
 
 <template>
-  <RouterLink
-    :to="game.route"
-    class="flex min-h-[190px] flex-col items-center justify-center rounded-xl border-2 p-4 text-center text-white no-underline shadow-[0_8px_24px_rgba(0,0,0,0.22)] transition duration-200 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-[0_16px_36px_rgba(0,0,0,0.32)] sm:min-h-[210px] sm:p-5"
-    :style="{ backgroundColor: game.color, borderColor: game.borderColor }"
-  >
-    <div
-      class="inline-flex h-12 min-w-12 shrink-0 items-center justify-center rounded-lg border-2 border-orange-300 bg-ink-950 px-2 text-lg font-extrabold tracking-wide sm:h-14 sm:min-w-14 sm:text-xl"
-      aria-hidden="true"
-    >
-      {{ game.monogram }}
-    </div>
-
-    <h2 class="mb-0 mt-4 text-[1.3rem] leading-tight font-extrabold sm:text-2xl">
-      {{ game.title }}
-    </h2>
+  <RouterLink :to="game.route" class="game-card flex min-h-[200px] flex-col justify-between no-underline">
+    <span class="game-mark" :data-game="game.id" aria-hidden="true">
+      <GameIcon :id="game.id" />
+    </span>
+    <h2 class="m-0 text-heading-sm text-ink">{{ game.title }}</h2>
   </RouterLink>
 </template>
+
+<style scoped>
+.game-card {
+  padding: 24px;
+  border-radius: 40px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-mist);
+  box-shadow: var(--shadow-board);
+  outline: 1.5px solid transparent;
+  outline-offset: -1.5px;
+}
+
+.game-card:hover {
+  outline-color: var(--color-ink);
+}
+
+.game-mark {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 19px;
+  background: var(--color-accent-400);
+  color: #131517;
+}
+
+.game-mark svg {
+  width: 28px;
+  height: 28px;
+}
+
+.game-mark[data-game='tango'] {
+  background: var(--color-accent-300);
+  color: #131517;
+}
+
+.game-mark[data-game='buscaminas'] {
+  background: var(--color-accent-400);
+  color: #131517;
+}
+
+.game-mark[data-game='patches'] {
+  background: var(--color-accent-500);
+  color: #fff;
+}
+
+.game-mark[data-game='2048'] {
+  background: var(--color-accent-600);
+  color: #fff;
+}
+</style>

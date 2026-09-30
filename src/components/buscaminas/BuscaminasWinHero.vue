@@ -16,25 +16,13 @@ function formatTime(s) {
 </script>
 
 <template>
-  <section
-    class="mx-auto w-full max-w-[560px] rounded-lg border-2 border-orange-300 bg-[#9a3412] p-8 text-center text-white shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
-  >
-    <p class="mb-2 inline-block rounded bg-ink-950 px-2.5 py-0.5 text-[0.72rem] font-bold tracking-wider uppercase">
-      Buscaminas completado
-    </p>
-    <h2 class="m-0 mb-2 text-3xl font-extrabold tracking-tight">¡Tablero despejado! 🎉</h2>
-    <p class="m-0 mb-1 font-semibold opacity-95">
-      {{ size }}×{{ size }} · {{ difficultyLabel }}
-    </p>
-    <p class="m-0 mb-6 text-sm opacity-85">
+  <section class="surface-card mx-auto w-full max-w-[560px] text-center">
+    <p class="badge-peach mb-4">Completado</p>
+    <h2 class="m-0 mb-3 text-heading text-ink">Tablero despejado</h2>
+    <p class="m-0 mb-1 font-medium text-ink">{{ size }}×{{ size }} · {{ difficultyLabel }}</p>
+    <p class="m-0 mb-6 text-sm text-stone">
       {{ moves }} movimiento{{ moves === 1 ? '' : 's' }} · {{ formatTime(seconds) }}
     </p>
-    <button
-      type="button"
-      class="rounded-md border border-orange-300 bg-orange-500 px-6 py-3 text-base font-extrabold text-white transition hover:bg-orange-600"
-      @click="emit('play-again')"
-    >
-      Jugar otra vez →
-    </button>
+    <button type="button" class="btn-fill" @click="emit('play-again')">Jugar otra vez</button>
   </section>
 </template>

@@ -13,7 +13,7 @@ export const games = [
   },
   {
     id: 'buscaminas',
-    title: 'Buscaminas',
+    title: 'Busca minas',
     short: 'Despeja el tablero sin explotar',
     description: 'Revela casillas, marca las minas y despeja todo el tablero.',
     monogram: 'B',

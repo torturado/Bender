@@ -1,13 +1,14 @@
 <script setup>
 import { onBeforeUnmount, onUnmounted, ref, watch } from 'vue'
-import { RouterLink } from 'vue-router'
 import PatchesBoard from '../components/patches/PatchesBoard.vue'
 import PatchesToolbar from '../components/patches/PatchesToolbar.vue'
 import PatchesWinHero from '../components/patches/PatchesWinHero.vue'
 import GamePhase from '../components/GamePhase.vue'
+import GameIcon from '../components/GameIcon.vue'
+import BackLink from '../components/BackLink.vue'
 import { DIFFICULTIES, SHAPES, SIZE } from '../games/patches/constants.js'
 import { generatePuzzle } from '../games/patches/generator.js'
-import { checkWin, coversBoard } from '../games/patches/validators.js'
+import { checkWin, coversBoard, rectsOverlap } from '../games/patches/validators.js'
 
 const SAVE_KEY = 'bender.patches.save.v1'
 
@@ -196,6 +197,10 @@ function restart() {
 
 function onDraw(rect) {
   if (status.value !== 'playing') return
+  if (patches.value.some((patch) => rectsOverlap(rect, patch))) {
+    flashNotice('Los parches no pueden solaparse')
+    return
+  }
   saveEnabled = true
   const patch = { id: nextId++, ...rect }
   patches.value = [...patches.value, patch]
@@ -240,52 +245,39 @@ onUnmounted(() => {
     class="game-page"
     :class="{ 'game-page--active': status === 'playing' }"
   >
-    <RouterLink to="/" class="back">← Volver al menú</RouterLink>
+    <BackLink />
 
     <Transition name="phase" mode="out-in">
       <GamePhase v-if="status === 'setup'" variant="setup">
         <div class="game-header patches">
-          <span class="monogram" aria-hidden="true">P</span>
+          <span class="monogram monogram--patches" aria-hidden="true"><GameIcon id="patches" /></span>
           <div>
             <h1>Patches</h1>
             <p>Divide el tablero en parches.</p>
           </div>
         </div>
-        <section
-          class="mx-auto w-full max-w-xl rounded-lg border border-ink-500 bg-ink-900 p-6 sm:p-8"
-        >
-          <h2 class="m-0 text-xl font-extrabold tracking-tight text-white">Configura tu partida</h2>
-          <p class="mt-1 mb-6 text-sm text-mist-400">
+        <section class="surface-card mx-auto w-full max-w-xl">
+          <h2 class="m-0 text-heading-sm text-ink">Configura tu partida</h2>
+          <p class="mt-1 mb-6 text-sm text-stone">
             Tablero de {{ SIZE }}×{{ SIZE }}. Elige la dificultad antes de empezar.
           </p>
 
-          <p class="mb-2 text-xs font-bold tracking-wider text-mist-300 uppercase">Dificultad</p>
+          <p class="caption mb-2">Dificultad</p>
           <div class="mb-8 grid grid-cols-3 gap-2" role="radiogroup" aria-label="Dificultad">
             <button
               v-for="option in DIFFICULTIES"
               :key="option.id"
               type="button"
+              class="chip"
               :aria-pressed="setupDifficulty === option.id"
-              :class="[
-                'min-h-[44px] rounded-md border px-3 py-2.5 text-sm font-bold transition',
-                setupDifficulty === option.id
-                  ? 'border-orange-400 bg-orange-500 text-white'
-                  : 'border-ink-500 bg-ink-800 text-mist-300 hover:border-mist-500 hover:text-white',
-              ]"
               @click="setupDifficulty = option.id"
             >
               {{ option.label }}
             </button>
           </div>
 
-          <button
-            type="button"
-            class="w-full rounded-md bg-orange-500 px-5 py-3 text-base font-extrabold text-white transition hover:bg-orange-600"
-            @click="startGame"
-          >
-            Jugar
-          </button>
-          <p class="mt-3 mb-0 text-center text-xs text-mist-400">
+          <button type="button" class="btn-fill w-full" @click="startGame">Jugar</button>
+          <p class="mt-3 mb-0 text-center text-sm text-stone">
             Cada partida genera un tablero y unas pistas diferentes.
           </p>
         </section>
@@ -308,7 +300,7 @@ onUnmounted(() => {
         />
         <div
           v-if="notice"
-          class="board-alert mx-auto mt-4 w-full max-w-[440px] rounded-md border border-red-500 bg-red-500/10 px-4 py-2.5 text-center text-sm font-bold text-red-400"
+          class="board-alert mx-auto mt-4 w-full max-w-[440px] rounded-small border border-signal/30 bg-signal/10 px-4 py-2.5 text-center text-sm font-medium text-signal"
           role="alert"
         >
           {{ notice }}
@@ -329,8 +321,4 @@ onUnmounted(() => {
 
 <style scoped>
 @import './game-page.css';
-.game-header.patches {
-  background-color: #5b21b6;
-  border-color: #fb923c;
-}
 </style>

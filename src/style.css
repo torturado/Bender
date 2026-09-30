@@ -1,22 +1,51 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  /* Manrope: grotesca geométrica, el sustituto libre de Roobert. */
+  --font-sans: Manrope, ui-sans-serif, system-ui, sans-serif;
 
-  /* Fondo base de la app (antes #0a0c14 hardcodeado) */
-  --color-ink-950: #0a0c14;
-  --color-ink-900: #121627;
-  --color-ink-800: #1c2135;
-  --color-ink-700: #22263a;
-  --color-ink-600: #1e2438;
-  --color-ink-500: #2c334d;
+  --color-voltage: #cc62d5;
+  --color-voltage-press: #b84ec2;
+  --color-accent-300: #ecb166;
+  --color-accent-400: #e28e3a;
+  --color-accent-500: #d87022;
+  --color-accent-600: #b7521f;
+  --color-ember: #d87022;
+  --color-peach: #f8ead6;
+  --color-signal: #e83b47;
+  --color-ink: #131517;
+  --color-on-ink: #ffffff;
+  --color-porcelain: #f4f5f6;
+  --color-surface: #ffffff;
+  --color-graphite: #333537;
+  --color-on-graphite: #ffffff;
+  --color-stone: #737577;
+  --color-mist: #b3b5b7;
+  --color-cell-hidden: #ecb166;
+  --color-cell-line: #c17a32;
+  --color-cell-dug: #8f4a22;
+  --color-cell-dug-edge: #6e3416;
+  --color-badge: #b7521f;
 
-  /* Grises de texto (antes #5b6178, #8b90a7, etc.) */
-  --color-mist-500: #5b6178;
-  --color-mist-400: #8b90a7;
-  --color-mist-300: #aab0c5;
-  --color-mist-200: #c9cede;
-  --color-mist-100: #e8eaf2;
+  --radius-button: 19px;
+  --radius-card: 40px;
+  --radius-badge: 4px;
+  --radius-small: 8px;
+
+  --text-display: 56px;
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.018em;
+  --text-display--font-weight: 700;
+
+  --text-heading: 40px;
+  --text-heading--line-height: 1.1;
+  --text-heading--letter-spacing: -0.018em;
+  --text-heading--font-weight: 700;
+
+  --text-heading-sm: 24px;
+  --text-heading-sm--line-height: 1.2;
+  --text-heading-sm--letter-spacing: -0.018em;
+  --text-heading-sm--font-weight: 700;
 }
 
 @layer base {
@@ -24,9 +53,32 @@
     font-family: var(--font-sans);
     line-height: 1.5;
     font-weight: 400;
+    letter-spacing: -0.018em;
+    font-feature-settings: "ss01" on, "ss02" on, "cv11" on;
+    color-scheme: light;
+    color: var(--color-ink);
+    background-color: var(--color-porcelain);
+    --shadow-board: 0 12px 32px rgba(0, 0, 0, 0.06);
+  }
+
+  :root[data-theme='night'] {
     color-scheme: dark;
-    color: var(--color-mist-100);
-    background-color: var(--color-ink-950);
+    --color-porcelain: #141618;
+    --color-surface: #222528;
+    --color-ink: #f4f5f6;
+    --color-on-ink: #141618;
+    --color-stone: #a8abac;
+    --color-mist: #464a4e;
+    --color-graphite: #e6e7e8;
+    --color-on-graphite: #141618;
+    --color-peach: #3a2a1e;
+    --color-ember: #e28e3a;
+    --color-cell-hidden: #d4923f;
+    --color-cell-line: #8a4e22;
+    --color-cell-dug: #3a281e;
+    --color-cell-dug-edge: #241810;
+    --color-badge: #ecb166;
+    --shadow-board: 0 12px 32px rgba(0, 0, 0, 0.4);
   }
 
   /* Movimiento: siempre corto y discreto. El bloque de
@@ -44,10 +96,15 @@
     margin: 0;
     min-width: 320px;
     min-height: 100vh;
-    background:
-      radial-gradient(1000px 400px at 20% -5%, rgba(66, 184, 131, 0.12), transparent),
-      radial-gradient(900px 380px at 85% 0%, rgba(100, 108, 255, 0.12), transparent),
-      var(--color-ink-950);
+    background-color: var(--color-porcelain);
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+    letter-spacing: inherit;
   }
 
   #app {
@@ -62,7 +119,7 @@
 
   /* Foco visible para navegación por teclado */
   :focus-visible {
-    outline: 2px solid var(--color-orange-400, #fb923c);
+    outline: 2px solid var(--color-ink);
     outline-offset: 2px;
   }
 }
@@ -71,6 +128,143 @@
    Solo transform + opacity: animar left/top o height provoca layout
    en cada frame y se nota en gama baja. */
 @layer components {
+  .btn-fill,
+  .btn-ghost,
+  .btn-ink {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 14px;
+    border-radius: var(--radius-button);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.018em;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .btn-fill {
+    border: none;
+    background: var(--color-voltage);
+    color: #fff;
+  }
+
+  .btn-fill:hover {
+    background: var(--color-voltage-press);
+  }
+
+  .btn-ghost {
+    border: 1.5px solid var(--color-ink);
+    background: var(--color-surface);
+    color: var(--color-ink);
+  }
+
+  .btn-ghost:hover {
+    background: var(--color-porcelain);
+  }
+
+  .btn-ink {
+    border: none;
+    background: var(--color-graphite);
+    color: var(--color-on-graphite);
+  }
+
+  .btn-ink:hover {
+    background: var(--color-ink);
+  }
+
+  .btn-fill:disabled,
+  .btn-ghost:disabled,
+  .btn-ink:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+
+  .btn-compact {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 14px;
+    border: 1.5px solid var(--color-ink);
+    border-radius: var(--radius-button);
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .chip:hover {
+    background: var(--color-porcelain);
+  }
+
+  .chip[aria-pressed='true'] {
+    background: var(--color-ink);
+    color: var(--color-on-ink);
+  }
+
+  .chip[aria-pressed='true']:hover {
+    background: var(--color-ink);
+  }
+
+  .surface-card {
+    background: var(--color-surface);
+    border-radius: var(--radius-card);
+    padding: 24px;
+  }
+
+  .caption {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.5;
+    letter-spacing: 0.083em;
+    text-transform: uppercase;
+    color: var(--color-stone);
+  }
+
+  .badge-peach {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: var(--radius-badge);
+    background: var(--color-peach);
+    color: var(--color-badge);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+    letter-spacing: 0.083em;
+    text-transform: uppercase;
+  }
+
+  .logo-mark {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: radial-gradient(86% 86% at 6% 9%, #8800ff 0%, #a732d6 51%, #ef79ff 100%);
+    color: #fff;
+  }
+
+  .wordmark {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.018em;
+    text-transform: lowercase;
+    color: var(--color-ink);
+  }
+
   .page-forward-enter-active,
   .page-forward-leave-active,
   .page-back-enter-active,

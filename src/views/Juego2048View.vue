@@ -1,10 +1,11 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { RouterLink } from 'vue-router'
 import Game2048Board from '../components/juego2048/Game2048Board.vue'
 import Game2048Toolbar from '../components/juego2048/Game2048Toolbar.vue'
 import Game2048Hero from '../components/juego2048/Game2048Hero.vue'
 import GamePhase from '../components/GamePhase.vue'
+import GameIcon from '../components/GameIcon.vue'
+import BackLink from '../components/BackLink.vue'
 import { SIZE, TARGET } from '../games/juego2048/constants.js'
 import {
   cloneBoard,
@@ -260,53 +261,45 @@ onBeforeUnmount(() => {
       'game-page--active': shownStatus === 'playing' || shownStatus === 'endless',
     }"
   >
-    <RouterLink to="/" class="back">← Volver al menú</RouterLink>
+    <BackLink />
 
     <Transition name="phase" mode="out-in">
       <GamePhase v-if="shownStatus === 'setup'" variant="setup">
         <div class="game-header juego2048">
-          <span class="monogram" aria-hidden="true">2048</span>
+          <span class="monogram monogram--2048" aria-hidden="true"><GameIcon id="2048" /></span>
           <div>
             <h1>2048</h1>
             <p>Desliza y combina hasta 2048.</p>
           </div>
         </div>
-        <section
-          class="mx-auto w-full max-w-xl rounded-lg border border-ink-500 bg-ink-900 p-6 sm:p-8"
-        >
-          <h2 class="m-0 text-xl font-extrabold tracking-tight text-white">Configura tu partida</h2>
-          <p class="mt-1 mb-6 text-sm text-mist-400">
+        <section class="surface-card mx-auto w-full max-w-xl">
+          <h2 class="m-0 text-heading-sm text-ink">Configura tu partida</h2>
+          <p class="mt-1 mb-6 text-sm text-stone">
             Une fichas iguales hasta llegar al {{ TARGET }} en un tablero de {{ SIZE }}×{{ SIZE }}.
           </p>
 
           <div class="mb-8 grid grid-cols-2 gap-2">
-            <div class="rounded-lg border border-ink-600 bg-ink-800 p-4 text-center">
-              <p class="m-0 text-xs font-bold tracking-wider text-mist-500 uppercase">Tablero</p>
-              <p class="mt-1 mb-0 text-lg font-extrabold text-white">{{ SIZE }}×{{ SIZE }}</p>
+            <div class="rounded-small bg-porcelain p-4 text-center">
+              <p class="caption m-0">Tablero</p>
+              <p class="mt-1 mb-0 text-heading-sm text-ink">{{ SIZE }}×{{ SIZE }}</p>
             </div>
-            <div class="rounded-lg border border-ink-600 bg-ink-800 p-4 text-center">
-              <p class="m-0 text-xs font-bold tracking-wider text-mist-500 uppercase">Objetivo</p>
-              <p class="mt-1 mb-0 text-lg font-extrabold text-white">{{ TARGET }}</p>
+            <div class="rounded-small bg-porcelain p-4 text-center">
+              <p class="caption m-0">Objetivo</p>
+              <p class="mt-1 mb-0 text-heading-sm text-ink">{{ TARGET }}</p>
             </div>
           </div>
 
-          <button
-            type="button"
-            class="w-full rounded-md bg-orange-500 px-5 py-3 text-base font-extrabold text-white transition hover:bg-orange-600"
-            @click="startGame"
-          >
-            Jugar
-          </button>
-          <p class="mt-3 mb-0 text-center text-xs text-mist-400">
+          <button type="button" class="btn-fill w-full" @click="startGame">Jugar</button>
+          <p class="mt-3 mb-0 text-center text-sm text-stone">
             En móvil, desliza sobre el tablero. En ordenador, usa las flechas o WASD.
           </p>
         </section>
       </GamePhase>
 
       <GamePhase v-else-if="shownStatus === 'playing' || shownStatus === 'endless'">
-        <p class="mb-4 text-center text-sm text-mist-400">
+        <p class="mb-4 text-center text-sm text-stone">
           Desliza y combina hasta {{ TARGET }}.
-          <span v-if="shownStatus === 'endless'" class="font-bold text-amber-300">∞ Modo infinito</span>
+          <span v-if="shownStatus === 'endless'" class="font-bold text-ember">Modo infinito</span>
           <span v-else class="sm:hidden"> · desliza para mover</span>
           <span v-if="shownStatus !== 'endless'" class="hidden sm:inline"> · flechas o WASD para mover</span>
         </p>
@@ -344,8 +337,4 @@ onBeforeUnmount(() => {
 
 <style scoped>
 @import './game-page.css';
-.game-header.juego2048 {
-  background-color: #0c4a6e;
-  border-color: #fb923c;
-}
 </style>

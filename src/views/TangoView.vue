@@ -1,11 +1,12 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import { RouterLink } from 'vue-router'
 import TangoSetupMenu from '../components/tango/TangoSetupMenu.vue'
 import TangoBoard from '../components/tango/TangoBoard.vue'
 import TangoToolbar from '../components/tango/TangoToolbar.vue'
 import TangoWinHero from '../components/tango/TangoWinHero.vue'
 import GamePhase from '../components/GamePhase.vue'
+import GameIcon from '../components/GameIcon.vue'
+import BackLink from '../components/BackLink.vue'
 import {
   EMPTY,
   SUN,
@@ -253,12 +254,12 @@ function onCellClick({ r, c }) {
 
 <template>
   <main class="game-page" :class="{ 'game-page--active': status === 'playing' }">
-    <RouterLink to="/" class="back">← Volver al menú</RouterLink>
+    <BackLink />
 
     <Transition name="phase" mode="out-in">
       <GamePhase v-if="status === 'setup'" variant="setup">
         <div class="game-header tango">
-          <span class="monogram" aria-hidden="true">T</span>
+          <span class="monogram monogram--tango" aria-hidden="true"><GameIcon id="tango" /></span>
           <div>
             <h1>Tango</h1>
             <p>Puzzle de lógica por cuadrícula.</p>
@@ -268,9 +269,9 @@ function onCellClick({ r, c }) {
       </GamePhase>
 
       <GamePhase v-else-if="status === 'playing'">
-        <p class="mb-4 text-center text-sm text-mist-400">
+        <p class="mb-4 text-center text-sm text-stone">
           {{ size }}×{{ size }} · {{ difficultyLabel(difficulty) }} · lo que incumple las reglas
-          se marca en <span class="font-bold text-red-400">rojo con una ✕</span>
+          se marca en <span class="font-bold text-signal">rojo</span>
         </p>
         <TangoToolbar
           :can-undo="history.length > 0"
@@ -289,7 +290,7 @@ function onCellClick({ r, c }) {
         <p class="mt-5 text-center">
           <button
             type="button"
-            class="bg-transparent border-none text-xs font-semibold text-mist-500 underline-offset-2 hover:text-mist-300 hover:underline"
+            class="quiet-link"
             @click="backToSetup"
           >
             Cambiar configuración (tamaño / dificultad)
@@ -308,7 +309,7 @@ function onCellClick({ r, c }) {
         <p class="mt-5 text-center">
           <button
             type="button"
-            class="bg-transparent border-none text-xs font-semibold text-mist-500 underline-offset-2 hover:text-mist-300 hover:underline"
+            class="quiet-link"
             @click="backToSetup"
           >
             Cambiar configuración (tamaño / dificultad)
@@ -321,8 +322,4 @@ function onCellClick({ r, c }) {
 
 <style scoped>
 @import './game-page.css';
-.game-header.tango {
-  background-color: #14532d;
-  border-color: #fb923c;
-}
 </style>

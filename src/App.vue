@@ -175,33 +175,49 @@ onBeforeUnmount(() => {
     <Transition name="dialog">
       <div
         v-if="exitDialogOpen"
-        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 px-4 py-6 backdrop-blur-sm"
+        class="fixed inset-0 z-[100] flex items-center justify-center bg-ink/40 px-4 py-6"
         @click.self="closeExitDialog"
         @keydown.esc.stop.prevent="closeExitDialog"
       >
         <section
-          class="game-dialog-panel w-full max-w-md rounded-2xl border border-ink-600 bg-ink-900 p-6 text-center shadow-2xl"
+          class="game-dialog-panel surface-card w-full max-w-md text-center"
           role="alertdialog"
           aria-modal="true"
           aria-labelledby="exit-dialog-title"
           aria-describedby="exit-dialog-description"
         >
           <div
-            class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-orange-500/15 text-2xl"
+            class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-peach text-badge"
             aria-hidden="true"
           >
-            ↩
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path
+                d="M9 8H5.5V4.5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M5.8 8.2A7.2 7.2 0 1 1 6.6 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+              />
+            </svg>
           </div>
-          <h2 id="exit-dialog-title" class="m-0 text-2xl font-extrabold text-white">
+          <h2 id="exit-dialog-title" class="m-0 text-heading-sm text-ink">
             ¿Quieres salir del juego?
           </h2>
-          <p id="exit-dialog-description" class="mt-3 mb-6 text-mist-300">
+          <p id="exit-dialog-description" class="mt-3 mb-6 text-stone">
             Si tienes una partida en curso, se guarda automáticamente para continuar cuando vuelvas.
           </p>
-          <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-center">
             <button
               type="button"
-              class="min-h-12 rounded-lg border border-ink-600 px-5 py-3 font-bold text-mist-200 transition hover:bg-ink-800 hover:text-white"
+              class="btn-ghost"
               @click="confirmExit"
             >
               Salir
@@ -209,7 +225,7 @@ onBeforeUnmount(() => {
             <button
               ref="continueButton"
               type="button"
-              class="min-h-12 rounded-lg bg-orange-500 px-5 py-3 font-extrabold text-white transition hover:bg-orange-600"
+              class="btn-fill"
               @click="closeExitDialog"
             >
               Seguir jugando

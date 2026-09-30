@@ -1,11 +1,12 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import { RouterLink } from 'vue-router'
 import BuscaminasSetupMenu from '../components/buscaminas/BuscaminasSetupMenu.vue'
 import BuscaminasBoard from '../components/buscaminas/BuscaminasBoard.vue'
 import BuscaminasToolbar from '../components/buscaminas/BuscaminasToolbar.vue'
 import BuscaminasWinHero from '../components/buscaminas/BuscaminasWinHero.vue'
 import GamePhase from '../components/GamePhase.vue'
+import GameIcon from '../components/GameIcon.vue'
+import BackLink from '../components/BackLink.vue'
 import {
   TOOL_PALA,
   TOOL_BANDERA,
@@ -279,14 +280,14 @@ function onCellFlag({ r, c }) {
 
 <template>
   <main class="game-page" :class="{ 'game-page--active': status === 'playing' }">
-    <RouterLink to="/" class="back">← Volver al menú</RouterLink>
+    <BackLink />
 
     <Transition name="phase" mode="out-in">
       <GamePhase v-if="status === 'setup'" variant="setup">
         <div class="game-header buscaminas">
-          <span class="monogram" aria-hidden="true">B</span>
+          <span class="monogram monogram--buscaminas" aria-hidden="true"><GameIcon id="buscaminas" /></span>
           <div>
-            <h1>Buscaminas</h1>
+            <h1>Busca minas</h1>
             <p>Despeja el tablero sin explotar.</p>
           </div>
         </div>
@@ -296,9 +297,9 @@ function onCellFlag({ r, c }) {
       <!-- Al perder no cambia de rama: el tablero se queda y lo que
            avisa es el aviso y la revelación de las minas. -->
       <GamePhase v-else-if="status === 'playing' || status === 'lost'">
-        <p class="mb-4 text-center text-sm text-mist-400">
-          {{ size }}×{{ size }} · {{ difficultyLabel(difficulty) }} · 💣 {{ mineTotal }} ·
-          con sus 🚩 puestas, pulsa un número para abrir alrededor
+        <p class="mb-4 text-center text-sm text-stone">
+          {{ size }}×{{ size }} · {{ difficultyLabel(difficulty) }} · {{ mineTotal }} minas ·
+          con las banderas puestas, pulsa un número para abrir alrededor
         </p>
         <BuscaminasToolbar
           :tool="tool"
@@ -309,10 +310,10 @@ function onCellFlag({ r, c }) {
         />
         <div
           v-if="status === 'lost'"
-          class="board-alert mx-auto mb-4 w-full max-w-[560px] rounded-md border border-red-500 bg-red-500/10 px-4 py-3 text-center text-sm font-bold text-red-400"
+          class="board-alert mx-auto mb-4 w-full max-w-[560px] rounded-small border border-signal/30 bg-signal/10 px-4 py-3 text-center text-sm font-medium text-signal"
           role="alert"
         >
-          💥 ¡Boom! Pisaste una mina. Pulsa Reiniciar para intentarlo de nuevo.
+          Pisaste una mina. Pulsa Reiniciar para intentarlo de nuevo.
         </div>
         <BuscaminasBoard
           :size="size"
@@ -330,7 +331,7 @@ function onCellFlag({ r, c }) {
         <p class="mt-5 text-center">
           <button
             type="button"
-            class="bg-transparent border-none text-xs font-semibold text-mist-500 underline-offset-2 hover:text-mist-300 hover:underline"
+            class="quiet-link"
             @click="backToSetup"
           >
             Cambiar configuración (tamaño / dificultad)
@@ -349,7 +350,7 @@ function onCellFlag({ r, c }) {
         <p class="mt-5 text-center">
           <button
             type="button"
-            class="bg-transparent border-none text-xs font-semibold text-mist-500 underline-offset-2 hover:text-mist-300 hover:underline"
+            class="quiet-link"
             @click="backToSetup"
           >
             Cambiar configuración (tamaño / dificultad)
@@ -362,8 +363,4 @@ function onCellFlag({ r, c }) {
 
 <style scoped>
 @import './game-page.css';
-.game-header.buscaminas {
-  background-color: #9a3412;
-  border-color: #fdba74;
-}
 </style>

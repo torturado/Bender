@@ -44,11 +44,12 @@ function cellLabel(value, r, c) {
 
 <template>
   <div
-    class="game-board-frame game-2048-board-frame mx-auto rounded-lg border border-ink-500 bg-ink-900 p-2.5 touch-none"
+    class="game-board-frame game-2048-board-frame mx-auto touch-none"
     @touchstart="onTouchStart"
     @touchend="onTouchEnd"
     @touchcancel="onTouchCancel"
   >
+    <div class="rounded-small bg-mist p-2">
     <div
       class="game-2048-tile-area relative grid gap-2"
       :style="{
@@ -68,10 +69,8 @@ function cellLabel(value, r, c) {
           :key="'cell-' + r + '-' + c"
           role="gridcell"
           :aria-label="cellLabel(value, r, c)"
-          class="flex aspect-square items-center justify-center rounded-md bg-ink-950/60 text-transparent"
-        >
-          ·
-        </div>
+          class="flex aspect-square items-center justify-center rounded-small bg-surface"
+        ></div>
       </div>
 
       <div class="pointer-events-none absolute inset-0" aria-hidden="true">
@@ -109,6 +108,7 @@ function cellLabel(value, r, c) {
           </div>
         </div>
       </div>
+    </div>
     </div>
   </div>
 </template>

@@ -25,7 +25,7 @@ const routes = [
     path: '/juegos/buscaminas',
     name: 'buscaminas',
     component: BuscaminasView,
-    meta: { title: 'Buscaminas' },
+    meta: { title: 'Busca minas' },
   },
   {
     path: '/juegos/patches',

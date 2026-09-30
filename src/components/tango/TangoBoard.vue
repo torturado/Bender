@@ -46,9 +46,9 @@ function onCell(r, c) {
 
 <template>
   <div class="game-board-frame tango-board-frame mx-auto">
-    <p class="board-instructions mb-3 text-center text-mist-400">
+    <p class="board-instructions mb-3 text-center text-stone">
       Cada fila y columna lleva {{ half }}
-      <svg class="inline-icon text-amber-300" viewBox="0 0 24 24" aria-hidden="true">
+      <svg class="inline-icon text-accent-500" viewBox="0 0 24 24" aria-hidden="true">
         <circle cx="12" cy="12" r="4.8" fill="currentColor" />
         <path
           class="cell-symbol-rays"
@@ -56,7 +56,7 @@ function onCell(r, c) {
         />
       </svg>
       y {{ half }}
-      <svg class="inline-icon text-sky-300" viewBox="0 0 24 24" aria-hidden="true">
+      <svg class="inline-icon text-ink" viewBox="0 0 24 24" aria-hidden="true">
         <path
           fill="currentColor"
           d="M20.6 14.6A8.9 8.9 0 1 1 9.4 3.4a7.2 7.2 0 0 0 11.2 11.2Z"
@@ -82,16 +82,16 @@ function onCell(r, c) {
             :class="[
               'board-cell relative flex aspect-square items-center justify-center rounded-md border transition select-none',
             isError(r - 1, c - 1)
-              ? 'border-red-500 bg-red-500/10 text-red-400 ring-1 ring-red-500'
+              ? 'border-signal bg-signal/10 text-signal ring-1 ring-signal'
               : isGiven(r - 1, c - 1)
-                ? 'cursor-not-allowed border-ink-600 bg-ink-800'
-                : 'border-ink-500 bg-ink-900 hover:border-orange-400',
+                ? 'cursor-not-allowed border-mist bg-surface'
+                : 'border-mist bg-porcelain hover:border-ink',
           ]"
           @click="onCell(r - 1, c - 1)"
         >
             <svg
               v-if="board[r - 1][c - 1] === SUN"
-              class="cell-symbol anim-pop text-amber-300"
+              class="cell-symbol anim-pop text-accent-500"
               viewBox="0 0 24 24"
               aria-hidden="true"
             >
@@ -103,7 +103,7 @@ function onCell(r, c) {
             </svg>
             <svg
               v-else-if="board[r - 1][c - 1] === MOON"
-              class="cell-symbol anim-pop text-sky-300"
+              class="cell-symbol anim-pop text-ink"
               viewBox="0 0 24 24"
               aria-hidden="true"
             >
@@ -117,19 +117,27 @@ function onCell(r, c) {
                 fill="currentColor"
               />
             </svg>
-            <span
+            <svg
               v-if="isError(r - 1, c - 1)"
-              class="cell-error anim-fade-up pointer-events-none absolute top-0 right-0.5 font-black text-red-400"
+              class="cell-error anim-fade-up pointer-events-none absolute top-0.5 right-0.5 text-signal"
+              viewBox="0 0 24 24"
               aria-hidden="true"
-              >✕</span
             >
+              <path
+                d="M7 7l10 10M17 7 7 17"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+              />
+            </svg>
 
           <!-- Marcas =/× en el borde derecho / inferior, dibujadas con trazos
                en vez de glifos: la "=" de una fuente a este tamaño sale con
                líneas de 1px que desaparecen. -->
           <span
             v-if="edgeMap.get(`${r - 1},${c - 1}`)?.right"
-            class="constraint-marker constraint-marker-right pointer-events-none absolute z-10 flex items-center justify-center rounded-full border border-mist-400 bg-ink-950 text-mist-100"
+            class="constraint-marker constraint-marker-right pointer-events-none absolute z-10 flex items-center justify-center rounded-full border border-ink bg-ink text-on-ink"
             aria-hidden="true"
           >
             <svg v-if="edgeMap.get(`${r - 1},${c - 1}`).right === '='" viewBox="0 0 24 24">
@@ -141,7 +149,7 @@ function onCell(r, c) {
           </span>
           <span
             v-if="edgeMap.get(`${r - 1},${c - 1}`)?.down"
-            class="constraint-marker constraint-marker-down pointer-events-none absolute z-10 flex items-center justify-center rounded-full border border-mist-400 bg-ink-950 text-mist-100"
+            class="constraint-marker constraint-marker-down pointer-events-none absolute z-10 flex items-center justify-center rounded-full border border-ink bg-ink text-on-ink"
             aria-hidden="true"
           >
             <svg v-if="edgeMap.get(`${r - 1},${c - 1}`).down === '='" viewBox="0 0 24 24">
@@ -198,8 +206,8 @@ function onCell(r, c) {
 }
 
 .cell-error {
-  font-size: clamp(0.75rem, 30cqw, 1.1rem);
-  line-height: 1;
+  width: clamp(0.7rem, 28cqw, 1rem);
+  height: clamp(0.7rem, 28cqw, 1rem);
 }
 
 /* El círculo crece a 48cqw y el glifo se dibuja con trazo de 2.6 en un
