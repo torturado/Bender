@@ -45,7 +45,7 @@ function routeForSave(save) {
         >
           Continuar {{ games.find((game) => game.id === save.gameId)?.title }}
           <span v-if="save.dailyDate" class="font-normal text-mist-400">· reto {{ save.dailyDate }}</span>
-          <span v-else class="font-normal text-mist-400">· {{ save.moves }} movimientos</span>
+          <span v-else class="font-normal text-mist-400">· {{ save.moves }} movimiento{{ save.moves === 1 ? '' : 's' }}</span>
         </RouterLink>
       </div>
     </section>
