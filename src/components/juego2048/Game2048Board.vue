@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { SIZE, tileClass } from '../../games/juego2048/constants.js'
 
 defineProps({
@@ -8,6 +8,7 @@ defineProps({
 })
 
 const emit = defineEmits(['move'])
+const boardElement = ref(null)
 
 const SWIPE_MIN = 24
 const touchStart = ref(null)
@@ -40,6 +41,8 @@ function fontSizeFor(value) {
 function cellLabel(value, r, c) {
   return `Fila ${r + 1}, columna ${c + 1}: ${value === 0 ? 'vacía' : value}`
 }
+
+onMounted(() => boardElement.value?.focus({ preventScroll: true }))
 </script>
 
 <template>
@@ -50,24 +53,34 @@ function cellLabel(value, r, c) {
     @touchcancel="onTouchCancel"
   >
     <div
-      class="game-2048-tile-area relative grid gap-2"
+      class="game-2048-tile-area relative grid gap-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-400"
+      ref="boardElement"
       :style="{
         '--tile-count': SIZE,
         gridTemplateColumns: `repeat(${SIZE}, minmax(0, 1fr))`,
       }"
       role="grid"
       aria-label="Tablero 2048"
+      :aria-rowcount="SIZE"
+      :aria-colcount="SIZE"
+      aria-describedby="game-2048-keyboard-help"
+      data-2048-board
+      tabindex="0"
     >
       <div
         v-for="(row, r) in board"
         :key="'row-' + r"
         class="contents"
+        role="row"
+        :aria-rowindex="r + 1"
       >
         <div
           v-for="(value, c) in row"
           :key="'cell-' + r + '-' + c"
           role="gridcell"
           :aria-label="cellLabel(value, r, c)"
+          :aria-rowindex="r + 1"
+          :aria-colindex="c + 1"
           class="flex aspect-square items-center justify-center rounded-md bg-surface-sunken text-transparent"
         >
           ·
@@ -110,6 +123,7 @@ function cellLabel(value, r, c) {
         </div>
       </div>
     </div>
+    <p id="game-2048-keyboard-help" class="sr-only">Enfoca el tablero y usa las flechas o W, A, S y D para mover las fichas.</p>
   </div>
 </template>
 

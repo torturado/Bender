@@ -1,9 +1,9 @@
 // Regresión del cajón lateral y de las cabeceras de configuración.
 // Lanza el dev server en otro puerto o ajusta BASE si no es 5173.
 import { chromium } from 'playwright-core'
+import { BASE, CHROMIUM_EXECUTABLE } from './browser.js'
 
-const BASE = process.env.BASE ?? 'http://localhost:5173'
-const b = await chromium.launch({ executablePath: `${process.env.HOME}/.local/bin/google-chrome-stable` })
+const b = await chromium.launch({ executablePath: CHROMIUM_EXECUTABLE })
 const fails = []
 const ok = (n, c, d = '') => { console.log(`  ${c ? 'ok  ' : 'FAIL'} ${n}  ${d}`); if (!c) fails.push(n) }
 

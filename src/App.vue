@@ -4,18 +4,21 @@ import { useRoute, useRouter } from 'vue-router'
 import { Capacitor } from '@capacitor/core'
 import { App as CapacitorApp } from '@capacitor/app'
 import Navbar from './components/Navbar.vue'
+import {
+  gameIdForRoute,
+  gameSaveKey,
+  hasGameSave,
+  saveActiveGame,
+  saveFailed,
+} from './data/gameStorage.js'
+import { normalizeDailyDate } from './games/random.js'
 
 const PROTECTED_ROUTES = new Set(['tango', 'buscaminas', 'patches', 'juego-2048'])
-const SAVE_KEYS = {
-  tango: 'bender.tango.save.v1',
-  buscaminas: 'bender.buscaminas.save.v1',
-  patches: 'bender.patches.save.v1',
-  'juego-2048': 'bender.2048.save.v1',
-}
 
 const route = useRoute()
 const router = useRouter()
 const exitDialogOpen = ref(false)
+const exitSaveAttemptFailed = ref(false)
 const pendingExitTarget = ref(null)
 const continueButton = ref(null)
 const isProtectedRoute = computed(() => PROTECTED_ROUTES.has(route.name))
@@ -28,6 +31,19 @@ const pageTransition = ref('page-fade')
 
 function depthOf(name) {
   return ROUTE_DEPTH[name] ?? 0
+}
+
+function focusRouteContent() {
+  const main = document.querySelector('main')
+  const target =
+    main?.querySelector('h1, h2') ??
+    main?.querySelector(
+      '[role="grid"][tabindex="0"], [data-tango-cell][tabindex="0"], [data-mines-cell][tabindex="0"]',
+    ) ??
+    main
+  if (!(target instanceof HTMLElement)) return
+  if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1')
+  target.focus({ preventScroll: true })
 }
 
 let previouslyFocused = null
@@ -44,14 +60,11 @@ function setAppInert(inert) {
   }
 }
 
-function hasSavedGame(routeName) {
-  const key = SAVE_KEYS[routeName]
-  if (!key) return false
-  try {
-    return Boolean(localStorage.getItem(key))
-  } catch {
-    return false
-  }
+function hasSavedGame(routeName, query = {}) {
+  const gameId = gameIdForRoute(routeName)
+  if (!gameId) return false
+  const key = gameSaveKey(gameId, normalizeDailyDate(query.daily))
+  return hasGameSave(key)
 }
 
 function setDialogPageState(open) {
@@ -62,6 +75,7 @@ function setDialogPageState(open) {
 async function openExitDialog(target) {
   if (!exitDialogOpen.value) {
     previouslyFocused = document.activeElement
+    exitSaveAttemptFailed.value = false
   }
   pendingExitTarget.value = target
   exitDialogOpen.value = true
@@ -73,6 +87,7 @@ async function openExitDialog(target) {
 async function closeExitDialog() {
   if (!exitDialogOpen.value) return
   exitDialogOpen.value = false
+  exitSaveAttemptFailed.value = false
   setDialogPageState(false)
   pendingExitTarget.value = null
   await nextTick()
@@ -82,6 +97,13 @@ async function closeExitDialog() {
 async function confirmExit() {
   const target = pendingExitTarget.value
   if (!target) return
+  if (!exitSaveAttemptFailed.value) {
+    const saveSucceeded = saveActiveGame()
+    if (!saveSucceeded || saveFailed.value) {
+      exitSaveAttemptFailed.value = true
+      return
+    }
+  }
   exitDialogOpen.value = false
   setDialogPageState(false)
   pendingExitTarget.value = null
@@ -92,6 +114,14 @@ async function confirmExit() {
     allowNextNavigation = false
     await openExitDialog(target)
   }
+}
+
+function saveOnPageHide() {
+  saveActiveGame()
+}
+
+function saveWhenBackgrounded() {
+  if (document.hidden) saveActiveGame()
 }
 
 const removeNavigationGuard = router.beforeEach((to, from) => {
@@ -106,11 +136,12 @@ const removeNavigationGuard = router.beforeEach((to, from) => {
   }
   if (
     !PROTECTED_ROUTES.has(from.name) ||
-    to.fullPath === from.fullPath ||
-    !hasSavedGame(from.name)
+    to.fullPath === from.fullPath
   ) {
     return true
   }
+  saveActiveGame()
+  if (!hasSavedGame(from.name, from.query) && !saveFailed.value) return true
   openExitDialog({
     fullPath: to.fullPath,
     location: {
@@ -127,12 +158,15 @@ async function handleNativeBack() {
     await closeExitDialog()
     return
   }
-  if (isProtectedRoute.value && hasSavedGame(route.name)) {
-    await openExitDialog({
-      fullPath: '/',
-      location: { path: '/' },
-    })
-    return
+  if (isProtectedRoute.value) {
+    saveActiveGame()
+    if (hasSavedGame(route.name, route.query) || saveFailed.value) {
+      await openExitDialog({
+        fullPath: '/',
+        location: { path: '/' },
+      })
+      return
+    }
   }
   if (window.history.state?.back) {
     window.history.back()
@@ -142,6 +176,8 @@ async function handleNativeBack() {
 }
 
 onMounted(async () => {
+  document.addEventListener('visibilitychange', saveWhenBackgrounded)
+  window.addEventListener('pagehide', saveOnPageHide)
   if (!Capacitor.isNativePlatform()) return
   try {
     removeBackButtonListener = await CapacitorApp.addListener(
@@ -153,6 +189,8 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   removeNavigationGuard()
+  document.removeEventListener('visibilitychange', saveWhenBackgrounded)
+  window.removeEventListener('pagehide', saveOnPageHide)
   removeBackButtonListener?.remove()
   setDialogPageState(false)
 })
@@ -164,8 +202,8 @@ onBeforeUnmount(() => {
 
     <div class="flex min-w-0 flex-1 flex-col pt-14 md:pt-0">
       <RouterView v-slot="{ Component }">
-        <Transition :name="pageTransition" mode="out-in">
-          <component :is="Component" :key="route.name" />
+        <Transition :name="pageTransition" mode="out-in" @after-enter="focusRouteContent">
+          <component :is="Component" :key="route.fullPath" />
         </Transition>
       </RouterView>
     </div>
@@ -195,8 +233,10 @@ onBeforeUnmount(() => {
           <h2 id="exit-dialog-title" class="m-0 text-2xl font-extrabold text-mist-100">
             ¿Quieres salir del juego?
           </h2>
-          <p id="exit-dialog-description" class="mt-3 mb-6 text-mist-300">
-            Si tienes una partida en curso, se guarda automáticamente para continuar cuando vuelvas.
+          <p id="exit-dialog-description" class="mt-3 mb-6 text-mist-300" role="status" aria-live="polite">
+            {{ saveFailed || exitSaveAttemptFailed
+              ? 'No se pudo confirmar el guardado. Si sales, podrías perder el progreso más reciente.'
+              : 'La partida se guarda para que puedas continuar cuando vuelvas.' }}
           </p>
           <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <button
@@ -204,7 +244,7 @@ onBeforeUnmount(() => {
               class="min-h-12 rounded-lg border border-ink-600 px-5 py-3 font-bold text-mist-200 transition hover:bg-ink-800 hover:text-mist-100"
               @click="confirmExit"
             >
-              Salir
+              {{ exitSaveAttemptFailed ? 'Salir sin guardar' : 'Salir' }}
             </button>
             <button
               ref="continueButton"

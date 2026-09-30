@@ -1,6 +1,8 @@
 <script setup>
 import { onBeforeUnmount, onUnmounted, ref, watch } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
+import DailyChallengeBanner from '../components/DailyChallengeBanner.vue'
+import GameSaveWarning from '../components/GameSaveWarning.vue'
 import PatchesBoard from '../components/patches/PatchesBoard.vue'
 import PatchesToolbar from '../components/patches/PatchesToolbar.vue'
 import PatchesWinHero from '../components/patches/PatchesWinHero.vue'
@@ -8,22 +10,55 @@ import GamePhase from '../components/GamePhase.vue'
 import { DIFFICULTIES, SHAPES, SIZE } from '../games/patches/constants.js'
 import { generatePuzzle } from '../games/patches/generator.js'
 import { checkWin, coversBoard } from '../games/patches/validators.js'
+import {
+  createSeededRandom,
+  dailyChallengeSeed,
+  normalizeDailyDate,
+} from '../games/random.js'
+import { confirmReplaceGame } from '../games/confirmReplace.js'
+import { useGameTimer } from '../composables/useGameTimer.js'
+import { bestTimeFor, recordBestTime } from '../data/gameRecords.js'
+import { readGameSettings, writeGameSettings } from '../data/gameSettings.js'
+import {
+  gameSaveKey,
+  readGameSave,
+  registerActiveGameSave,
+  removeGameSave,
+  writeGameSave,
+} from '../data/gameStorage.js'
 
-const SAVE_KEY = 'bender.patches.save.v1'
+const route = useRoute()
+const dailyDate = normalizeDailyDate(route.query.daily)
+const saveKey = gameSaveKey('patches', dailyDate)
+const timer = useGameTimer()
+const defaultSettings = { difficulty: 'media' }
+const initialSettings = readGameSettings(
+  'patches',
+  defaultSettings,
+  (value) => DIFFICULTIES.some((option) => option.id === value?.difficulty),
+)
+if (dailyDate) initialSettings.difficulty = 'media'
 
 const status = ref('setup') // setup | playing | won
-const setupDifficulty = ref('media')
-const difficulty = ref('media')
+const setupDifficulty = ref(initialSettings.difficulty)
+const difficulty = ref(initialSettings.difficulty)
 const clues = ref([])
 const patches = ref([]) // [{ id, r1, c1, r2, c2 }]
 const history = ref([]) // [{ type: 'add' | 'delete', patch }]
 const moves = ref(0)
-const startTime = ref(0)
 const winSeconds = ref(0)
+const isNewRecord = ref(false)
 const notice = ref(null)
 let noticeTimer = null
 let nextId = 1
 let saveEnabled = false
+
+const bestTime = ref(bestTimeFor('patches', difficulty.value))
+
+watch(setupDifficulty, (nextDifficulty) => {
+  bestTime.value = bestTimeFor('patches', nextDifficulty)
+  if (!dailyDate) writeGameSettings('patches', { difficulty: nextDifficulty })
+})
 
 function isValidRect(rect) {
   return (
@@ -86,42 +121,37 @@ function isValidSave(data) {
 }
 
 function clearSavedGame() {
-  try {
-    localStorage.removeItem(SAVE_KEY)
-  } catch {}
+  return removeGameSave(saveKey)
 }
 
 function saveGame() {
-  if (!saveEnabled || status.value !== 'playing' || clues.value.length === 0) return
-  try {
-    localStorage.setItem(
-      SAVE_KEY,
-      JSON.stringify({
-        version: 1,
-        difficulty: difficulty.value,
-        clues: clues.value,
-        patches: patches.value,
-        history: history.value,
-        nextId,
-        moves: moves.value,
-        elapsedMs: Math.max(0, Date.now() - startTime.value),
-        savedAt: Date.now(),
-      }),
-    )
-  } catch {}
+  if (!saveEnabled || status.value !== 'playing' || clues.value.length === 0) return true
+  return writeGameSave(saveKey, {
+    version: 1,
+    difficulty: difficulty.value,
+    clues: clues.value,
+    patches: patches.value,
+    history: history.value,
+    nextId,
+    moves: moves.value,
+    elapsedMs: timer.elapsedMs(),
+    savedAt: Date.now(),
+    dailyDate,
+  })
 }
 
 function updateSavedGame() {
   if (saveEnabled && status.value === 'playing') {
-    saveGame()
+    return saveGame()
   } else if (status.value === 'won') {
-    clearSavedGame()
+    return clearSavedGame()
   }
+  return true
 }
 
 function restoreGame() {
   try {
-    const raw = localStorage.getItem(SAVE_KEY)
+    const raw = readGameSave(saveKey)
     if (!raw) return
     const data = JSON.parse(raw)
     if (!isValidSave(data)) {
@@ -129,12 +159,14 @@ function restoreGame() {
       return
     }
     difficulty.value = data.difficulty
+    setupDifficulty.value = data.difficulty
+    bestTime.value = bestTimeFor('patches', data.difficulty)
     clues.value = data.clues
     patches.value = data.patches
     history.value = data.history
     nextId = data.nextId
     moves.value = data.moves
-    startTime.value = Date.now() - data.elapsedMs
+    timer.start(data.elapsedMs)
     winSeconds.value = 0
     notice.value = null
     saveEnabled = true
@@ -145,13 +177,17 @@ function restoreGame() {
 }
 
 watch(
-  [status, difficulty, clues, patches, history, moves, startTime],
+  [status, difficulty, clues, patches, history, moves],
   updateSavedGame,
   { deep: true },
 )
 
 restoreGame()
-onBeforeUnmount(updateSavedGame)
+const unregisterActiveGameSave = registerActiveGameSave(updateSavedGame)
+onBeforeUnmount(() => {
+  updateSavedGame()
+  unregisterActiveGameSave()
+})
 
 function flashNotice(msg) {
   notice.value = msg
@@ -165,9 +201,14 @@ function startGame() {
   newGame(setupDifficulty.value)
 }
 
-function newGame(difficultyId) {
-  const puzzle = generatePuzzle(difficultyId)
+function newGame(difficultyId = setupDifficulty.value) {
+  const selectedDifficulty = dailyDate ? 'media' : difficultyId
+  const random = dailyDate
+    ? createSeededRandom(dailyChallengeSeed('patches', dailyDate))
+    : Math.random
+  const puzzle = generatePuzzle(selectedDifficulty, random)
   difficulty.value = puzzle.difficulty
+  setupDifficulty.value = puzzle.difficulty
   clues.value = puzzle.clues
   patches.value = []
   history.value = []
@@ -175,14 +216,14 @@ function newGame(difficultyId) {
   moves.value = 0
   winSeconds.value = 0
   notice.value = null
-  startTime.value = Date.now()
+  timer.start()
+  isNewRecord.value = false
   saveEnabled = true
   status.value = 'playing'
 }
 
 function restart() {
   // Reiniciar: vacía el tablero, mismo puzzle y dificultad.
-  saveEnabled = false
   clearSavedGame()
   patches.value = []
   history.value = []
@@ -190,8 +231,16 @@ function restart() {
   moves.value = 0
   winSeconds.value = 0
   notice.value = null
-  startTime.value = Date.now()
+  timer.start()
   status.value = 'playing'
+}
+
+function requestRestart() {
+  if (confirmReplaceGame(moves.value, 'reiniciar')) restart()
+}
+
+function requestNewGame(difficultyId) {
+  if (confirmReplaceGame(moves.value, 'empezar otra partida')) newGame(difficultyId)
 }
 
 function onDraw(rect) {
@@ -200,9 +249,13 @@ function onDraw(rect) {
   const patch = { id: nextId++, ...rect }
   patches.value = [...patches.value, patch]
   history.value.push({ type: 'add', patch })
+  if (history.value.length > 100) history.value.shift()
   moves.value++
   if (checkWin(patches.value, clues.value, SIZE)) {
-    winSeconds.value = Math.floor((Date.now() - startTime.value) / 1000)
+    winSeconds.value = Math.floor(timer.elapsedMs() / 1000)
+    timer.stop()
+    isNewRecord.value = recordBestTime('patches', difficulty.value, winSeconds.value, moves.value)
+    bestTime.value = bestTimeFor('patches', difficulty.value)
     status.value = 'won'
   } else if (coversBoard(patches.value, SIZE)) {
     flashNotice('El tablero está cubierto, pero alguna pista todavía no se cumple. Revisa o elimina parches.')
@@ -216,6 +269,7 @@ function onDeletePatch(id) {
   saveEnabled = true
   patches.value = patches.value.filter((p) => p.id !== id)
   history.value.push({ type: 'delete', patch })
+  if (history.value.length > 100) history.value.shift()
   moves.value++
 }
 
@@ -227,7 +281,7 @@ function undo() {
   } else {
     patches.value = [...patches.value, last.patch]
   }
-  moves.value++
+  moves.value = Math.max(0, moves.value - 1)
 }
 
 onUnmounted(() => {
@@ -241,6 +295,8 @@ onUnmounted(() => {
     :class="{ 'game-page--active': status === 'playing' }"
   >
     <RouterLink to="/" class="back">← Volver al menú</RouterLink>
+    <DailyChallengeBanner v-if="dailyDate" :date="dailyDate" game-title="Patches" />
+    <GameSaveWarning />
 
     <Transition name="phase" mode="out-in">
       <GamePhase v-if="status === 'setup'" variant="setup">
@@ -256,16 +312,17 @@ onUnmounted(() => {
         >
           <h2 class="m-0 text-xl font-extrabold tracking-tight text-mist-100">Configura tu partida</h2>
           <p class="mt-1 mb-6 text-sm text-mist-400">
-            Tablero de {{ SIZE }}×{{ SIZE }}. Elige la dificultad antes de empezar.
+            Tablero de {{ SIZE }}×{{ SIZE }}. {{ dailyDate ? 'El reto diario usa la misma dificultad para todas las personas.' : 'Elige la dificultad antes de empezar.' }}
           </p>
 
           <p class="mb-2 text-xs font-bold tracking-wider text-mist-300 uppercase">Dificultad</p>
-          <div class="mb-8 grid grid-cols-3 gap-2" role="radiogroup" aria-label="Dificultad">
+          <div class="mb-8 grid grid-cols-3 gap-2" role="group" aria-label="Dificultad">
             <button
               v-for="option in DIFFICULTIES"
               :key="option.id"
               type="button"
               :aria-pressed="setupDifficulty === option.id"
+              :disabled="Boolean(dailyDate)"
               :class="[
                 'min-h-[44px] rounded-md border px-3 py-2.5 text-sm font-bold transition',
                 setupDifficulty === option.id
@@ -296,9 +353,11 @@ onUnmounted(() => {
           :difficulty="difficulty"
           :can-undo="history.length > 0"
           :moves="moves"
+          :seconds="timer.seconds.value"
+          :daily="Boolean(dailyDate)"
           @undo="undo"
-          @restart="restart"
-          @new-game="newGame"
+          @restart="requestRestart"
+          @new-game="requestNewGame"
         />
         <PatchesBoard
           :clues="clues"
@@ -320,6 +379,8 @@ onUnmounted(() => {
           :difficulty="difficulty"
           :moves="moves"
           :seconds="winSeconds"
+          :best-time="bestTime?.seconds ?? null"
+          :is-new-record="isNewRecord"
           @play-again="newGame"
         />
       </GamePhase>

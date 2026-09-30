@@ -6,7 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:menu": "node scripts/check-menu.mjs",
+    "check:tango": "node scripts/check-tango.mjs",
+    "check:2048": "node scripts/check-2048.mjs",
+    "check:motion": "node scripts/check-motion.mjs",
+    "check:browser": "npm run check:menu && npm run check:tango && npm run check:2048 && npm run check:motion"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",
@@ -20,6 +25,7 @@
     "@capacitor/assets": "^3.0.5",
     "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-vue": "^6.0.8",
+    "playwright-core": "^1.63.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
     "vite": "^8.2.2",

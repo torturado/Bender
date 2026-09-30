@@ -1,10 +1,13 @@
 <script setup>
 import { TOOL_PALA, TOOL_BANDERA } from '../../games/buscaminas/constants.js'
+import { formatDuration } from '../../games/time.js'
 
 defineProps({
   tool: { type: String, default: TOOL_PALA },
   flagsLeft: { type: Number, default: 0 },
   moves: { type: Number, default: 0 },
+  seconds: { type: Number, default: 0 },
+  daily: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['restart', 'set-tool'])
@@ -17,18 +20,17 @@ const emit = defineEmits(['restart', 'set-tool'])
       class="min-h-[44px] w-full min-w-0 rounded-md border border-ink-500 bg-ink-800 px-1.5 py-2 text-xs font-bold whitespace-nowrap text-mist-200 transition hover:border-mist-500 hover:text-mist-100 sm:px-4 sm:text-sm"
       @click="emit('restart')"
     >
-      ↺ Reiniciar
+      ↺ {{ daily ? 'Reiniciar reto' : 'Reiniciar' }}
     </button>
 
     <div
       class="grid min-w-0 grid-cols-2 overflow-hidden rounded-md border border-ink-500"
-      role="radiogroup"
+      role="group"
       aria-label="Herramienta"
     >
       <button
         type="button"
-        role="radio"
-        :aria-checked="tool === TOOL_PALA"
+        :aria-pressed="tool === TOOL_PALA"
         :class="[
           'min-h-[44px] min-w-0 px-1 py-2 text-xs font-bold whitespace-nowrap transition sm:px-4 sm:text-sm',
           tool === TOOL_PALA
@@ -41,8 +43,7 @@ const emit = defineEmits(['restart', 'set-tool'])
       </button>
       <button
         type="button"
-        role="radio"
-        :aria-checked="tool === TOOL_BANDERA"
+        :aria-pressed="tool === TOOL_BANDERA"
         :class="[
           'min-h-[44px] min-w-0 border-l border-ink-500 px-1 py-2 text-xs font-bold whitespace-nowrap transition sm:px-4 sm:text-sm',
           tool === TOOL_BANDERA
@@ -56,7 +57,8 @@ const emit = defineEmits(['restart', 'set-tool'])
     </div>
 
     <span class="col-span-2 text-center text-xs text-mist-400">
-      🚩 {{ flagsLeft }} restante{{ flagsLeft === 1 ? '' : 's' }}
+      <span aria-live="polite">🚩 {{ flagsLeft }} restante{{ flagsLeft === 1 ? '' : 's' }}</span>
+      · Tiempo {{ formatDuration(seconds) }}
       <span v-if="moves > 0" class="anim-fade-up"> · {{ moves }} movimiento{{ moves === 1 ? '' : 's' }}</span>
     </span>
   </div>

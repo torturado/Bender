@@ -1,11 +1,8 @@
 // Comprobación de las transiciones contra la web real renderizada.
-// Uso el google-chrome-stable del sistema en vez del MCP, que apunta al
-// canal 'chrome' (/opt/google/chrome/chrome) y no está instalado; el
-// chromium empaquetado de playwright viene sin libnspr4.
+// scripts/browser.js localiza Chrome/Chromium o respeta BENDER_CHROME_PATH.
 import { chromium } from 'playwright-core'
+import { BASE, CHROMIUM_EXECUTABLE } from './browser.js'
 
-const EXEC = `${process.env.HOME}/.local/bin/google-chrome-stable`
-const BASE = 'http://localhost:5173'
 const fails = []
 const ok = (name, cond, detail = '') => {
   if (cond) console.log(`  ok   ${name}`)
@@ -15,7 +12,7 @@ const ok = (name, cond, detail = '') => {
   }
 }
 
-const browser = await chromium.launch({ executablePath: EXEC })
+const browser = await chromium.launch({ executablePath: CHROMIUM_EXECUTABLE })
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } })
 const errors = []
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))

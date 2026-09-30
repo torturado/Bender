@@ -1,6 +1,6 @@
 <script setup>
-import { computed, ref } from 'vue'
-import { SIZE, PATCH_PALETTE } from '../../games/patches/constants.js'
+import { computed, onMounted, ref } from 'vue'
+import { SIZE, PATCH_PALETTE, SHAPE_LABEL } from '../../games/patches/constants.js'
 import { cluesInRect, normalizeRect, validatePlacement } from '../../games/patches/validators.js'
 
 const props = defineProps({
@@ -13,6 +13,12 @@ const emit = defineEmits(['draw', 'delete-patch'])
 
 const dragStart = ref(null)
 const dragEnd = ref(null)
+const keyboardStart = ref(null)
+const activeCell = ref({ r: 0, c: 0 })
+const keyboardAnnouncement = ref('')
+const boardGrid = ref(null)
+
+onMounted(() => boardGrid.value?.focus({ preventScroll: true }))
 
 const preview = computed(() => {
   if (!dragStart.value || !dragEnd.value) return null
@@ -105,8 +111,12 @@ function cellFromEvent(e) {
 function onPointerDown(e, r, c) {
   if (props.disabled) return
   e.preventDefault()
+  boardGrid.value?.focus({ preventScroll: true })
+  boardGrid.value?.setPointerCapture?.(e.pointerId)
   dragStart.value = { r, c }
   dragEnd.value = { r, c }
+  keyboardStart.value = null
+  activeCell.value = { r, c }
 }
 
 function onPointerMove(e) {
@@ -121,11 +131,16 @@ function onPointerUp(e) {
   const end = cellFromEvent(e) ?? dragEnd.value ?? start
   dragStart.value = null
   dragEnd.value = null
+  keyboardStart.value = null
   if (props.disabled) return
   const same = start.r === end.r && start.c === end.c
   if (same) {
     const idx = patchOfCell.value.get(`${start.r},${start.c}`)
-    if (idx !== undefined) emit('delete-patch', props.patches[idx].id)
+    if (idx !== undefined) {
+      const patch = props.patches[idx]
+      emit('delete-patch', patch.id)
+      keyboardAnnouncement.value = `Parche de área ${rectAreaOf(patch)} eliminado.`
+    }
     return
   }
   emit('draw', normalizeRect(start, end))
@@ -134,6 +149,88 @@ function onPointerUp(e) {
 function onPointerCancel() {
   dragStart.value = null
   dragEnd.value = null
+  keyboardStart.value = null
+}
+
+function cellLabel(r, c) {
+  const clue = props.clues.find((item) => item.r === r && item.c === c)
+  const patchIndex = patchOfCell.value.get(`${r},${c}`)
+  const parts = [`Fila ${r + 1}, columna ${c + 1}`]
+  if (clue) {
+    const shape = clue.shape === 'free' ? 'forma libre' : SHAPE_LABEL[clue.shape]
+    parts.push(`pista ${clue.number ?? 'sin número'}, ${shape}`)
+  }
+  if (patchIndex !== undefined) {
+    const patch = props.patches[patchIndex]
+    const overlay = patchOverlays.value[patchIndex]
+    parts.push(`parche de área ${overlay.area}, ${overlay.state === 'valid' ? 'correcto' : 'por revisar'}. Pulsa Suprimir para eliminarlo`)
+    return parts.join(', ')
+  }
+  if (!clue) parts.push('sin pista ni parche')
+  return `${parts.join(', ')}.`
+}
+
+function onGridKeydown(event) {
+  if (props.disabled) return
+  const { r, c } = activeCell.value
+  const movement = {
+    ArrowUp: [-1, 0],
+    ArrowDown: [1, 0],
+    ArrowLeft: [0, -1],
+    ArrowRight: [0, 1],
+  }[event.key]
+
+  if (movement) {
+    event.preventDefault()
+    const next = {
+      r: Math.max(0, Math.min(SIZE - 1, r + movement[0])),
+      c: Math.max(0, Math.min(SIZE - 1, c + movement[1])),
+    }
+    activeCell.value = next
+    if (keyboardStart.value) dragEnd.value = next
+    keyboardAnnouncement.value = cellLabel(next.r, next.c)
+    return
+  }
+
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    keyboardStart.value = null
+    dragStart.value = null
+    dragEnd.value = null
+    keyboardAnnouncement.value = 'Selección cancelada.'
+    return
+  }
+
+  if (event.key === 'Delete' || event.key === 'Backspace') {
+    event.preventDefault()
+    const patchIndex = patchOfCell.value.get(`${r},${c}`)
+    if (patchIndex !== undefined) {
+      emit('delete-patch', props.patches[patchIndex].id)
+      keyboardAnnouncement.value = `Parche de área ${rectAreaOf(props.patches[patchIndex])} eliminado.`
+    }
+    return
+  }
+
+  if (event.key !== 'Enter' && event.key !== ' ') return
+  event.preventDefault()
+  if (!keyboardStart.value) {
+    keyboardStart.value = { r, c }
+    dragStart.value = { r, c }
+    dragEnd.value = { r, c }
+    keyboardAnnouncement.value = `Inicio seleccionado. ${cellLabel(r, c)} Usa las flechas y pulsa Intro para completar el rectángulo.`
+    return
+  }
+
+  const start = keyboardStart.value
+  keyboardStart.value = null
+  dragStart.value = null
+  dragEnd.value = null
+  const rect = normalizeRect(start, activeCell.value)
+  const validation = validatePlacement(rect, props.clues, props.patches)
+  emit('draw', rect)
+  keyboardAnnouncement.value = validation.ok
+    ? `Parche válido, área ${rectAreaOf(rect)}.`
+    : `Parche añadido para revisar: ${validation.reason}.`
 }
 
 function shapeIcon(shape) {
@@ -148,27 +245,44 @@ function shapeIcon(shape) {
   <div class="game-board-frame patches-board-frame mx-auto">
     <div class="rounded-lg bg-ink-900 ring-1 ring-ink-500">
     <div class="relative">
+      <p class="mb-3 text-center text-sm text-mist-400">
+        Arrastra para dibujar. Con teclado, enfoca el tablero, usa las flechas y pulsa Intro en cada extremo.
+      </p>
       <!-- Base: casillas vacías + feedback del dibujo -->
       <div
-        class="grid touch-none gap-1 select-none"
+        ref="boardGrid"
+        class="grid touch-none gap-1 select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-400"
         :style="{ gridTemplateColumns: `repeat(${SIZE}, minmax(0, 1fr))` }"
         role="grid"
         aria-label="Tablero de Patches"
+        :aria-rowcount="SIZE"
+        :aria-colcount="SIZE"
+        aria-describedby="patches-keyboard-help"
+        :aria-activedescendant="`patch-cell-${activeCell.r}-${activeCell.c}`"
+        tabindex="0"
         @pointermove="onPointerMove"
         @pointerup="onPointerUp"
         @pointercancel="onPointerCancel"
+        @keydown="onGridKeydown"
       >
-        <template v-for="r in SIZE" :key="'row-' + r">
+        <div v-for="r in SIZE" :key="'row-' + r" class="contents" role="row" :aria-rowindex="r">
           <div
             v-for="c in SIZE"
             :key="'cell-' + r + '-' + c"
             role="gridcell"
+            :id="`patch-cell-${r - 1}-${c - 1}`"
+            :aria-label="cellLabel(r - 1, c - 1)"
+            :aria-selected="activeCell.r === r - 1 && activeCell.c === c - 1"
+            :aria-rowindex="r"
+            :aria-colindex="c"
             data-cell
             :data-r="r - 1"
             :data-c="c - 1"
             :class="[
               'aspect-square rounded border transition-colors',
-              previewKeys.has(`${r - 1},${c - 1}`)
+              activeCell.r === r - 1 && activeCell.c === c - 1
+                ? 'border-orange-300 ring-2 ring-orange-400'
+                : previewKeys.has(`${r - 1},${c - 1}`)
                 ? previewState === 'valid'
                   ? 'border-orange-400 bg-accent-selection'
                   : previewState === 'unrelated'
@@ -178,8 +292,13 @@ function shapeIcon(shape) {
             ]"
             @pointerdown="onPointerDown($event, r - 1, c - 1)"
           ></div>
-        </template>
+        </div>
       </div>
+
+      <p id="patches-keyboard-help" class="sr-only">
+        Usa las flechas para elegir una casilla. Pulsa Intro para marcar el inicio y otra vez para completar un parche. Pulsa Suprimir para eliminar un parche y Escape para cancelar.
+      </p>
+      <p class="sr-only" aria-live="polite">{{ keyboardAnnouncement }}</p>
 
       <!-- Parches fusionados + preview, superpuestos (no interceptan gestos) -->
       <div class="pointer-events-none absolute inset-0" aria-hidden="true">

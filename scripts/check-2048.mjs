@@ -1,6 +1,7 @@
 // Regresión del motor y de la capa visual animada del 2048.
 // El bloque de navegador espera el dev server en BASE (por defecto :5173).
 import { chromium } from 'playwright-core'
+import { BASE, CHROMIUM_EXECUTABLE } from './browser.js'
 import {
   boardsEqual,
   cloneBoard,
@@ -12,7 +13,6 @@ import {
 } from '../src/games/juego2048/engine.js'
 import { tilesAfterMove, tilesFromBoard } from '../src/games/juego2048/tiles.js'
 
-const BASE = process.env.BASE ?? 'http://localhost:5173'
 const SAVE_KEY = 'bender.2048.save.v1'
 const fails = []
 const ok = (name, condition, detail = '') => {
@@ -155,7 +155,7 @@ ok('la secuencia aleatoria cubre fusiones', mergeCount > 0, String(mergeCount))
 
 console.log('\n3. Navegador: geometría y movimiento')
 const browser = await chromium.launch({
-  executablePath: `${process.env.HOME}/.local/bin/google-chrome-stable`,
+  executablePath: CHROMIUM_EXECUTABLE,
 })
 const page = await browser.newPage({ viewport: { width: 390, height: 780 } })
 const errors = []

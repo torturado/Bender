@@ -1,6 +1,8 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
+import DailyChallengeBanner from '../components/DailyChallengeBanner.vue'
+import GameSaveWarning from '../components/GameSaveWarning.vue'
 import BuscaminasSetupMenu from '../components/buscaminas/BuscaminasSetupMenu.vue'
 import BuscaminasBoard from '../components/buscaminas/BuscaminasBoard.vue'
 import BuscaminasToolbar from '../components/buscaminas/BuscaminasToolbar.vue'
@@ -24,12 +26,41 @@ import {
   wrongFlags,
   countFlags,
 } from '../games/buscaminas/engine.js'
+import {
+  createSeededRandom,
+  dailyChallengeSeed,
+  normalizeDailyDate,
+} from '../games/random.js'
+import { confirmReplaceGame } from '../games/confirmReplace.js'
+import { useGameTimer } from '../composables/useGameTimer.js'
+import { bestTimeFor, recordBestTime } from '../data/gameRecords.js'
+import { readGameSettings, writeGameSettings } from '../data/gameSettings.js'
+import {
+  gameSaveKey,
+  readGameSave,
+  registerActiveGameSave,
+  removeGameSave,
+  writeGameSave,
+} from '../data/gameStorage.js'
 
-const SAVE_KEY = 'bender.buscaminas.save.v1'
+const route = useRoute()
+const dailyDate = normalizeDailyDate(route.query.daily)
+const saveKey = gameSaveKey('buscaminas', dailyDate)
+const timer = useGameTimer()
+const defaultSettings = { size: 8, difficulty: 'media' }
+const initialSettings = readGameSettings(
+  'buscaminas',
+  defaultSettings,
+  (value) => SIZES.includes(value?.size) && DIFFICULTIES.some((option) => option.id === value?.difficulty),
+)
+if (dailyDate) {
+  initialSettings.size = 10
+  initialSettings.difficulty = 'media'
+}
 
 const status = ref('setup') // setup | playing | lost | won
-const size = ref(8)
-const difficulty = ref('media')
+const size = ref(initialSettings.size)
+const difficulty = ref(initialSettings.difficulty)
 const mineTotal = ref(0)
 const mines = ref([])
 const numbers = ref([])
@@ -39,9 +70,19 @@ const minesPlaced = ref(false)
 const exploded = ref(null)
 const tool = ref(TOOL_PALA)
 const moves = ref(0)
-const startTime = ref(0)
 const winSeconds = ref(0)
+const isNewRecord = ref(false)
+const moveAnnouncement = ref('')
+const lossAlert = ref(null)
 let saveEnabled = false
+
+const timeCategory = computed(() => `${size.value}x${size.value}:${difficulty.value}`)
+const bestTime = ref(bestTimeFor('buscaminas', timeCategory.value))
+
+watch([size, difficulty], ([nextSize, nextDifficulty]) => {
+  bestTime.value = bestTimeFor('buscaminas', `${nextSize}x${nextSize}:${nextDifficulty}`)
+  if (!dailyDate) writeGameSettings('buscaminas', { size: nextSize, difficulty: nextDifficulty })
+})
 
 function isGrid(grid, size, isValidValue) {
   return (
@@ -76,45 +117,40 @@ function isValidSave(data) {
 }
 
 function clearSavedGame() {
-  try {
-    localStorage.removeItem(SAVE_KEY)
-  } catch {}
+  return removeGameSave(saveKey)
 }
 
 function saveGame() {
-  if (!saveEnabled || status.value !== 'playing' || mines.value.length !== size.value) return
-  try {
-    localStorage.setItem(
-      SAVE_KEY,
-      JSON.stringify({
-        version: 1,
-        size: size.value,
-        difficulty: difficulty.value,
-        mines: mines.value,
-        numbers: numbers.value,
-        revealed: revealed.value,
-        flagged: flagged.value,
-        minesPlaced: minesPlaced.value,
-        tool: tool.value,
-        moves: moves.value,
-        elapsedMs: Math.max(0, Date.now() - startTime.value),
-        savedAt: Date.now(),
-      }),
-    )
-  } catch {}
+  if (!saveEnabled || status.value !== 'playing' || mines.value.length !== size.value) return true
+  return writeGameSave(saveKey, {
+    version: 1,
+    size: size.value,
+    difficulty: difficulty.value,
+    mines: mines.value,
+    numbers: numbers.value,
+    revealed: revealed.value,
+    flagged: flagged.value,
+    minesPlaced: minesPlaced.value,
+    tool: tool.value,
+    moves: moves.value,
+    elapsedMs: timer.elapsedMs(),
+    savedAt: Date.now(),
+    dailyDate,
+  })
 }
 
 function updateSavedGame() {
   if (saveEnabled && status.value === 'playing') {
-    saveGame()
+    return saveGame()
   } else if (status.value === 'lost' || status.value === 'won') {
-    clearSavedGame()
+    return clearSavedGame()
   }
+  return true
 }
 
 function restoreGame() {
   try {
-    const raw = localStorage.getItem(SAVE_KEY)
+    const raw = readGameSave(saveKey)
     if (!raw) return
     const data = JSON.parse(raw)
     if (!isValidSave(data)) {
@@ -132,7 +168,7 @@ function restoreGame() {
     exploded.value = null
     tool.value = data.tool
     moves.value = data.moves
-    startTime.value = Date.now() - data.elapsedMs
+    timer.start(data.elapsedMs)
     winSeconds.value = 0
     saveEnabled = true
     status.value = 'playing'
@@ -153,14 +189,23 @@ watch(
     minesPlaced,
     tool,
     moves,
-    startTime,
   ],
   updateSavedGame,
   { deep: true },
 )
 
+watch(status, (nextStatus) => {
+  if (nextStatus === 'lost') {
+    nextTick(() => lossAlert.value?.focus({ preventScroll: true }))
+  }
+})
+
 restoreGame()
-onBeforeUnmount(updateSavedGame)
+const unregisterActiveGameSave = registerActiveGameSave(updateSavedGame)
+onBeforeUnmount(() => {
+  updateSavedGame()
+  unregisterActiveGameSave()
+})
 
 const flagsLeft = computed(() => mineTotal.value - countFlags(flagged.value))
 const lostWrongFlags = computed(() =>
@@ -168,19 +213,22 @@ const lostWrongFlags = computed(() =>
 )
 
 function startGame({ size: newSize, difficulty: newDifficulty }) {
-  size.value = newSize
-  difficulty.value = newDifficulty
-  mineTotal.value = minesFor(newSize, newDifficulty)
-  mines.value = emptyGrid(newSize, false)
-  numbers.value = emptyGrid(newSize, 0)
-  revealed.value = emptyGrid(newSize, false)
-  flagged.value = emptyGrid(newSize, false)
+  const selectedSize = dailyDate ? 10 : newSize
+  const selectedDifficulty = dailyDate ? 'media' : newDifficulty
+  size.value = selectedSize
+  difficulty.value = selectedDifficulty
+  mineTotal.value = minesFor(selectedSize, selectedDifficulty)
+  mines.value = emptyGrid(selectedSize, false)
+  numbers.value = emptyGrid(selectedSize, 0)
+  revealed.value = emptyGrid(selectedSize, false)
+  flagged.value = emptyGrid(selectedSize, false)
   minesPlaced.value = false
   exploded.value = null
   tool.value = TOOL_PALA
   moves.value = 0
   winSeconds.value = 0
-  startTime.value = Date.now()
+  timer.start()
+  isNewRecord.value = false
   saveEnabled = true
   status.value = 'playing'
   nextTick(() => window.scrollTo(0, 0))
@@ -189,19 +237,25 @@ function startGame({ size: newSize, difficulty: newDifficulty }) {
 function restart() {
   // Reiniciar = nueva organización con la misma configuración.
   startGame({ size: size.value, difficulty: difficulty.value })
-  saveEnabled = false
   clearSavedGame()
 }
 
 function backToSetup() {
   saveEnabled = false
+  timer.stop()
   clearSavedGame()
   status.value = 'setup'
 }
 
 function ensureMines(r, c) {
   if (minesPlaced.value) return
-  mines.value = placeMines(size.value, mineTotal.value, r, c)
+  const random = dailyDate
+    ? createSeededRandom(dailyChallengeSeed('buscaminas', dailyDate))
+    : Math.random
+  const safeCell = dailyDate
+    ? { r: Math.floor(size.value / 2), c: Math.floor(size.value / 2) }
+    : { r, c }
+  mines.value = placeMines(size.value, mineTotal.value, safeCell.r, safeCell.c, random)
   numbers.value = computeNumbers(mines.value)
   minesPlaced.value = true
 }
@@ -218,6 +272,7 @@ function dig(r, c) {
   if (mines.value[r][c]) {
     exploded.value = { r, c }
     status.value = 'lost'
+    timer.stop()
     return
   }
   const { grid } = revealFrom(revealed.value, numbers.value, size.value, r, c)
@@ -240,6 +295,7 @@ function chord(r, c) {
     exploded.value = res.mineAt
     status.value = 'lost'
     moves.value++
+    timer.stop()
     return
   }
   if (res.opened === 0) return
@@ -251,35 +307,61 @@ function chord(r, c) {
 
 function checkWinAndFinish() {
   if (checkWin(revealed.value, mines.value)) {
-    winSeconds.value = Math.floor((Date.now() - startTime.value) / 1000)
+    winSeconds.value = Math.floor(timer.elapsedMs() / 1000)
+    timer.stop()
+    isNewRecord.value = recordBestTime('buscaminas', timeCategory.value, winSeconds.value, moves.value)
+    bestTime.value = bestTimeFor('buscaminas', timeCategory.value)
     status.value = 'won'
   }
 }
 
+function requestRestart() {
+  if (confirmReplaceGame(moves.value, 'reiniciar')) restart()
+}
+
 function toggleFlag(r, c) {
-  if (revealed.value[r][c]) return
-  if (!flagged.value[r][c] && flagsLeft.value <= 0) return
+  if (revealed.value[r][c]) return false
+  if (!flagged.value[r][c] && flagsLeft.value <= 0) return false
   saveEnabled = true
   flagged.value[r][c] = !flagged.value[r][c]
   moves.value++
+  return true
 }
 
 function onCellClick({ r, c }) {
   if (status.value !== 'playing') return
-  if (tool.value === TOOL_BANDERA) toggleFlag(r, c)
-  else dig(r, c)
+  if (tool.value === TOOL_BANDERA) {
+    const changed = toggleFlag(r, c)
+    moveAnnouncement.value = changed
+      ? `Fila ${r + 1}, columna ${c + 1}: ${flagged.value[r][c] ? 'bandera marcada' : 'bandera retirada'}.`
+      : revealed.value[r][c]
+        ? `Fila ${r + 1}, columna ${c + 1}: la casilla ya está abierta.`
+        : 'No quedan banderas. Retira una para colocar otra.'
+    return
+  }
+  dig(r, c)
+  moveAnnouncement.value = status.value === 'lost'
+    ? `Fila ${r + 1}, columna ${c + 1}: mina detonada.`
+    : `Fila ${r + 1}, columna ${c + 1}: ${revealed.value[r][c] ? numbers.value[r][c] === 0 ? 'casilla vacía' : `número ${numbers.value[r][c]}` : 'casilla sin cambios'}.`
 }
 
 function onCellFlag({ r, c }) {
   // Atajo de escritorio: click derecho alterna bandera.
   if (status.value !== 'playing') return
-  toggleFlag(r, c)
+  const changed = toggleFlag(r, c)
+  moveAnnouncement.value = changed
+    ? `Fila ${r + 1}, columna ${c + 1}: ${flagged.value[r][c] ? 'bandera marcada' : 'bandera retirada'}.`
+    : revealed.value[r][c]
+      ? `Fila ${r + 1}, columna ${c + 1}: la casilla ya está abierta.`
+      : 'No quedan banderas. Retira una para colocar otra.'
 }
 </script>
 
 <template>
   <main class="game-page" :class="{ 'game-page--active': status === 'playing' }">
     <RouterLink to="/" class="back">← Volver al menú</RouterLink>
+    <DailyChallengeBanner v-if="dailyDate" :date="dailyDate" game-title="Buscaminas" />
+    <GameSaveWarning />
 
     <Transition name="phase" mode="out-in">
       <GamePhase v-if="status === 'setup'" variant="setup">
@@ -290,7 +372,12 @@ function onCellFlag({ r, c }) {
             <p>Despeja el tablero sin explotar.</p>
           </div>
         </div>
-        <BuscaminasSetupMenu @play="startGame" />
+        <BuscaminasSetupMenu
+          v-model:size="size"
+          v-model:difficulty="difficulty"
+          :locked="Boolean(dailyDate)"
+          @play="startGame"
+        />
       </GamePhase>
 
       <!-- Al perder no cambia de rama: el tablero se queda y lo que
@@ -298,19 +385,23 @@ function onCellFlag({ r, c }) {
       <GamePhase v-else-if="status === 'playing' || status === 'lost'">
         <p class="mb-4 text-center text-sm text-mist-400">
           {{ size }}×{{ size }} · {{ difficultyLabel(difficulty) }} · 💣 {{ mineTotal }} ·
-          con sus 🚩 puestas, pulsa un número para abrir alrededor
+          {{ dailyDate ? 'reto compartido: empieza por el centro · ' : '' }}con sus 🚩 puestas, pulsa un número para abrir alrededor
         </p>
         <BuscaminasToolbar
           :tool="tool"
           :flags-left="flagsLeft"
           :moves="moves"
-          @restart="restart"
+          :seconds="timer.seconds.value"
+          :daily="Boolean(dailyDate)"
+          @restart="requestRestart"
           @set-tool="tool = $event"
         />
         <div
           v-if="status === 'lost'"
           class="board-alert mx-auto mb-4 w-full max-w-[560px] rounded-md border border-red-500 bg-red-500/10 px-4 py-3 text-center text-sm font-bold text-danger-fg"
           role="alert"
+          ref="lossAlert"
+          tabindex="-1"
         >
           💥 ¡Boom! Pisaste una mina. Pulsa Reiniciar para intentarlo de nuevo.
         </div>
@@ -327,6 +418,7 @@ function onCellFlag({ r, c }) {
           @cell-click="onCellClick"
           @cell-flag="onCellFlag"
         />
+        <p class="sr-only" aria-live="polite">{{ moveAnnouncement }}</p>
         <p class="mt-5 text-center">
           <button
             type="button"
@@ -344,6 +436,8 @@ function onCellFlag({ r, c }) {
           :difficulty-label="difficultyLabel(difficulty)"
           :moves="moves"
           :seconds="winSeconds"
+          :best-time="bestTime?.seconds ?? null"
+          :is-new-record="isNewRecord"
           @play-again="restart"
         />
         <p class="mt-5 text-center">

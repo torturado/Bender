@@ -59,8 +59,10 @@ function closeFromKeyboard() {
 }
 
 watch(isExpanded, (expanded) => {
-  if (typeof localStorage !== 'undefined') {
+  try {
     localStorage.setItem(STORAGE_KEY, String(expanded))
+  } catch {
+    // The sidebar still works when browser storage is unavailable.
   }
 })
 
@@ -78,7 +80,11 @@ watch(isMobileOpen, (open) => {
 onMounted(() => {
   desktopQuery = window.matchMedia('(min-width: 768px)')
   isDesktop.value = desktopQuery.matches
-  isExpanded.value = localStorage.getItem(STORAGE_KEY) !== 'false'
+  try {
+    isExpanded.value = localStorage.getItem(STORAGE_KEY) !== 'false'
+  } catch {
+    isExpanded.value = true
+  }
   desktopQuery.addEventListener('change', syncViewport)
 })
 

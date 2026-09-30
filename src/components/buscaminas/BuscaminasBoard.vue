@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 const props = defineProps({
   size: { type: Number, required: true },
@@ -14,8 +14,13 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['cell-click', 'cell-flag'])
+const activeCell = ref({ r: 0, c: 0 })
 
 const interactive = computed(() => props.status === 'playing')
+
+onMounted(() => {
+  document.querySelector('[data-mines-cell][tabindex="0"]')?.focus({ preventScroll: true })
+})
 
 // En claro los *-300/*-400 se lavan sobre la casilla clara: bajan a *-700.
 const NUMBER_CLASSES = {
@@ -44,23 +49,61 @@ function cellContent(r, c) {
   if (showMine(r, c)) return 'mine'
   return 'hidden'
 }
+
+function cellLabel(r, c) {
+  const content = cellContent(r, c)
+  const state = content === 'hidden'
+    ? 'tapada'
+    : content === 'empty'
+      ? 'vacía, sin minas vecinas'
+      : content === 'number'
+        ? `número ${props.numbers[r][c]}`
+        : content === 'wrong-flag'
+          ? 'bandera incorrecta'
+          : content === 'flag'
+            ? 'bandera marcada'
+            : props.exploded?.r === r && props.exploded?.c === c
+              ? 'mina detonada'
+              : 'mina'
+  return `Fila ${r + 1}, columna ${c + 1}: ${state}`
+}
+
+function onGridKeydown(event, r, c) {
+  const movement = {
+    ArrowUp: [-1, 0],
+    ArrowDown: [1, 0],
+    ArrowLeft: [0, -1],
+    ArrowRight: [0, 1],
+  }[event.key]
+  if (!movement) return
+  event.preventDefault()
+  const nextR = Math.max(0, Math.min(props.size - 1, r + movement[0]))
+  const nextC = Math.max(0, Math.min(props.size - 1, c + movement[1]))
+  document.querySelector(`[data-mines-cell="${nextR},${nextC}"]`)?.focus()
+}
 </script>
 
 <template>
   <div
-    class="game-board-frame buscaminas-board-frame mx-auto grid gap-1"
+    class="game-board-frame buscaminas-board-frame mx-auto grid gap-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-400"
     :style="{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }"
     role="grid"
     aria-label="Tablero de Buscaminas"
+    :aria-rowcount="size"
+    :aria-colcount="size"
   >
-    <template v-for="r in size" :key="'row-' + r">
+    <div v-for="r in size" :key="'row-' + r" class="contents" role="row">
       <button
         v-for="c in size"
         :key="'cell-' + r + '-' + c"
         type="button"
         role="gridcell"
-        :aria-label="`Fila ${r}, columna ${c}`"
-        :aria-disabled="!interactive"
+        :data-mines-cell="`${r - 1},${c - 1}`"
+        :aria-label="cellLabel(r - 1, c - 1)"
+        :aria-rowindex="r"
+        :aria-colindex="c"
+        :tabindex="activeCell.r === r - 1 && activeCell.c === c - 1 ? 0 : -1"
+        :disabled="!interactive"
         :class="[
           'buscaminas-cell flex aspect-square items-center justify-center rounded border font-extrabold transition select-none',
           cellContent(r - 1, c - 1) === 'hidden'
@@ -73,6 +116,8 @@ function cellContent(r, c) {
           !interactive ? 'hover:border-ink-500' : '',
         ]"
         @click="emit('cell-click', { r: r - 1, c: c - 1 })"
+        @focus="activeCell = { r: r - 1, c: c - 1 }"
+        @keydown="onGridKeydown($event, r - 1, c - 1)"
         @contextmenu.prevent="emit('cell-flag', { r: r - 1, c: c - 1 })"
       >
         <span
@@ -97,7 +142,7 @@ function cellContent(r, c) {
           >🚩<span class="text-danger-fg">✕</span></span
         >
       </button>
-    </template>
+    </div>
   </div>
 </template>
 

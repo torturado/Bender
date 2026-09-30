@@ -19,10 +19,10 @@ export function neighborsOf(size, r, c) {
   return out
 }
 
-function shuffled(arr) {
+function shuffled(arr, random = Math.random) {
   const a = arr.slice()
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
+    const j = Math.floor(random() * (i + 1))
     ;[a[i], a[j]] = [a[j], a[i]]
   }
   return a
@@ -32,7 +32,7 @@ function shuffled(arr) {
  * Coloca mineCount minas evitando la casilla segura y sus vecinas
  * (primer click siempre abre zona limpia).
  */
-export function placeMines(size, mineCount, safeR, safeC) {
+export function placeMines(size, mineCount, safeR, safeC, random = Math.random) {
   const safe = new Set([`${safeR},${safeC}`])
   for (const [nr, nc] of neighborsOf(size, safeR, safeC)) safe.add(`${nr},${nc}`)
   const candidates = []
@@ -42,7 +42,7 @@ export function placeMines(size, mineCount, safeR, safeC) {
     }
   }
   const mines = emptyGrid(size, false)
-  for (const [r, c] of shuffled(candidates).slice(0, mineCount)) {
+  for (const [r, c] of shuffled(candidates, random).slice(0, mineCount)) {
     mines[r][c] = true
   }
   return mines

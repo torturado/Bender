@@ -1,6 +1,8 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
+import DailyChallengeBanner from '../components/DailyChallengeBanner.vue'
+import GameSaveWarning from '../components/GameSaveWarning.vue'
 import TangoSetupMenu from '../components/tango/TangoSetupMenu.vue'
 import TangoBoard from '../components/tango/TangoBoard.vue'
 import TangoToolbar from '../components/tango/TangoToolbar.vue'
@@ -16,24 +18,63 @@ import {
 } from '../games/tango/constants.js'
 import { generatePuzzle } from '../games/tango/generator.js'
 import {
+  createSeededRandom,
+  dailyChallengeSeed,
+  normalizeDailyDate,
+} from '../games/random.js'
+import { confirmReplaceGame } from '../games/confirmReplace.js'
+import { useGameTimer } from '../composables/useGameTimer.js'
+import { bestTimeFor, recordBestTime } from '../data/gameRecords.js'
+import { readGameSettings, writeGameSettings } from '../data/gameSettings.js'
+import {
+  gameSaveKey,
+  readGameSave,
+  registerActiveGameSave,
+  removeGameSave,
+  writeGameSave,
+} from '../data/gameStorage.js'
+import {
   findRuleViolations,
   isWin,
 } from '../games/tango/validators.js'
 
-const SAVE_KEY = 'bender.tango.save.v1'
+const route = useRoute()
+const dailyDate = normalizeDailyDate(route.query.daily)
+const saveKey = gameSaveKey('tango', dailyDate)
+const timer = useGameTimer()
+const defaultSettings = { size: 6, difficulty: 'media' }
+const initialSettings = readGameSettings(
+  'tango',
+  defaultSettings,
+  (value) => SIZES.includes(value?.size) && DIFFICULTIES.some((option) => option.id === value?.difficulty),
+)
+if (dailyDate) {
+  initialSettings.size = 6
+  initialSettings.difficulty = 'media'
+}
 
 const status = ref('setup') // setup | playing | won
-const size = ref(6)
-const difficulty = ref('media')
+const size = ref(initialSettings.size)
+const difficulty = ref(initialSettings.difficulty)
 const solution = ref([])
 const givens = ref([])
 const constraints = ref([])
 const board = ref([])
 const history = ref([]) // [{ r, c, prev, next }]
 const moves = ref(0)
-const startTime = ref(0)
 const winSeconds = ref(0)
+const isNewRecord = ref(false)
+const puzzleNotice = ref('')
+const moveAnnouncement = ref('')
 let saveEnabled = false
+
+const timeCategory = computed(() => `${size.value}x${size.value}:${difficulty.value}`)
+const bestTime = ref(bestTimeFor('tango', timeCategory.value))
+
+watch([size, difficulty], ([nextSize, nextDifficulty]) => {
+  bestTime.value = bestTimeFor('tango', `${nextSize}x${nextSize}:${nextDifficulty}`)
+  if (!dailyDate) writeGameSettings('tango', { size: nextSize, difficulty: nextDifficulty })
+})
 
 function isGrid(grid, size, isValidValue) {
   return (
@@ -102,44 +143,39 @@ function isValidSave(data) {
 }
 
 function clearSavedGame() {
-  try {
-    localStorage.removeItem(SAVE_KEY)
-  } catch {}
+  return removeGameSave(saveKey)
 }
 
 function saveGame() {
-  if (!saveEnabled || status.value !== 'playing' || board.value.length !== size.value) return
-  try {
-    localStorage.setItem(
-      SAVE_KEY,
-      JSON.stringify({
-        version: 1,
-        size: size.value,
-        difficulty: difficulty.value,
-        board: board.value,
-        solution: solution.value,
-        givens: givens.value,
-        constraints: constraints.value,
-        history: history.value,
-        moves: moves.value,
-        elapsedMs: Math.max(0, Date.now() - startTime.value),
-        savedAt: Date.now(),
-      }),
-    )
-  } catch {}
+  if (!saveEnabled || status.value !== 'playing' || board.value.length !== size.value) return true
+  return writeGameSave(saveKey, {
+    version: 1,
+    size: size.value,
+    difficulty: difficulty.value,
+    board: board.value,
+    solution: solution.value,
+    givens: givens.value,
+    constraints: constraints.value,
+    history: history.value,
+    moves: moves.value,
+    elapsedMs: timer.elapsedMs(),
+    savedAt: Date.now(),
+    dailyDate,
+  })
 }
 
 function updateSavedGame() {
   if (saveEnabled && status.value === 'playing') {
-    saveGame()
+    return saveGame()
   } else if (status.value === 'won') {
-    clearSavedGame()
+    return clearSavedGame()
   }
+  return true
 }
 
 function restoreGame() {
   try {
-    const raw = localStorage.getItem(SAVE_KEY)
+    const raw = readGameSave(saveKey)
     if (!raw) return
     const data = JSON.parse(raw)
     if (!isValidSave(data)) {
@@ -154,7 +190,7 @@ function restoreGame() {
     constraints.value = data.constraints
     history.value = data.history
     moves.value = data.moves
-    startTime.value = Date.now() - data.elapsedMs
+    timer.start(data.elapsedMs)
     winSeconds.value = 0
     saveEnabled = true
     status.value = 'playing'
@@ -164,13 +200,17 @@ function restoreGame() {
 }
 
 watch(
-  [status, size, difficulty, board, solution, givens, constraints, history, moves, startTime],
+  [status, size, difficulty, board, solution, givens, constraints, history, moves],
   updateSavedGame,
   { deep: true },
 )
 
 restoreGame()
-onBeforeUnmount(updateSavedGame)
+const unregisterActiveGameSave = registerActiveGameSave(updateSavedGame)
+onBeforeUnmount(() => {
+  updateSavedGame()
+  unregisterActiveGameSave()
+})
 
 const errorKeys = computed(() => {
   if (status.value === 'setup' || board.value.length === 0) return new Set()
@@ -182,7 +222,12 @@ function clone(boardToCopy) {
 }
 
 function startGame({ size: newSize, difficulty: newDifficulty }) {
-  const puzzle = generatePuzzle(newSize, newDifficulty)
+  const selectedSize = dailyDate ? 6 : newSize
+  const selectedDifficulty = dailyDate ? 'media' : newDifficulty
+  const random = dailyDate
+    ? createSeededRandom(dailyChallengeSeed('tango', dailyDate))
+    : Math.random
+  const puzzle = generatePuzzle(selectedSize, selectedDifficulty, random)
   size.value = puzzle.size
   difficulty.value = puzzle.difficulty
   solution.value = puzzle.solution
@@ -192,7 +237,11 @@ function startGame({ size: newSize, difficulty: newDifficulty }) {
   history.value = []
   moves.value = 0
   winSeconds.value = 0
-  startTime.value = Date.now()
+  isNewRecord.value = false
+  puzzleNotice.value = puzzle.extraGivens > 0
+    ? `Se añadieron ${puzzle.extraGivens} pistas para garantizar que este tablero tenga una única solución.`
+    : ''
+  timer.start()
   saveEnabled = true
   status.value = 'playing'
   nextTick(() => window.scrollTo(0, 0))
@@ -200,13 +249,12 @@ function startGame({ size: newSize, difficulty: newDifficulty }) {
 
 function restartSame() {
   // Reinicia la MISMA partida: vuelve a las pistas iniciales.
-  saveEnabled = false
   clearSavedGame()
   const fresh = board.value.map((row, r) => row.map((_, c) => (givens.value[r][c] ? solution.value[r][c] : EMPTY)))
   board.value = fresh
   history.value = []
   moves.value = 0
-  startTime.value = Date.now()
+  timer.start()
   status.value = 'playing'
 }
 
@@ -217,6 +265,7 @@ function newPuzzle() {
 
 function backToSetup() {
   saveEnabled = false
+  timer.stop()
   clearSavedGame()
   status.value = 'setup'
 }
@@ -225,6 +274,16 @@ function undo() {
   const last = history.value.pop()
   if (!last) return
   board.value[last.r][last.c] = last.prev
+  moves.value = Math.max(0, moves.value - 1)
+  moveAnnouncement.value = `Fila ${last.r + 1}, columna ${last.c + 1}: jugada deshecha.`
+}
+
+function requestRestart() {
+  if (confirmReplaceGame(moves.value, 'reiniciar')) restartSame()
+}
+
+function requestNewPuzzle() {
+  if (confirmReplaceGame(moves.value, 'empezar otra partida')) newPuzzle()
 }
 
 function cycle(value) {
@@ -242,10 +301,17 @@ function onCellClick({ r, c }) {
   saveEnabled = true
   board.value[r][c] = next
   history.value.push({ r, c, prev, next })
+  if (history.value.length > 100) history.value.shift()
   moves.value++
+  const symbol = next === EMPTY ? 'casilla vacía' : next === SUN ? 'sol' : 'luna'
+  const hasError = errorKeys.value.has(`${r},${c}`)
+  moveAnnouncement.value = `Fila ${r + 1}, columna ${c + 1}: ${symbol}${hasError ? ', incumple una regla' : ''}.`
 
   if (isWin(board.value, solution.value, givens.value, constraints.value)) {
-    winSeconds.value = Math.floor((Date.now() - startTime.value) / 1000)
+    winSeconds.value = Math.floor(timer.elapsedMs() / 1000)
+    timer.stop()
+    isNewRecord.value = recordBestTime('tango', timeCategory.value, winSeconds.value, moves.value)
+    bestTime.value = bestTimeFor('tango', timeCategory.value)
     status.value = 'won'
   }
 }
@@ -254,6 +320,8 @@ function onCellClick({ r, c }) {
 <template>
   <main class="game-page" :class="{ 'game-page--active': status === 'playing' }">
     <RouterLink to="/" class="back">← Volver al menú</RouterLink>
+    <DailyChallengeBanner v-if="dailyDate" :date="dailyDate" game-title="Tango" />
+    <GameSaveWarning />
 
     <Transition name="phase" mode="out-in">
       <GamePhase v-if="status === 'setup'" variant="setup">
@@ -264,7 +332,12 @@ function onCellClick({ r, c }) {
             <p>Puzzle de lógica por cuadrícula.</p>
           </div>
         </div>
-        <TangoSetupMenu @play="startGame" />
+        <TangoSetupMenu
+          v-model:size="size"
+          v-model:difficulty="difficulty"
+          :locked="Boolean(dailyDate)"
+          @play="startGame"
+        />
       </GamePhase>
 
       <GamePhase v-else-if="status === 'playing'">
@@ -275,10 +348,15 @@ function onCellClick({ r, c }) {
         <TangoToolbar
           :can-undo="history.length > 0"
           :moves="moves"
-          @restart="restartSame"
+          :seconds="timer.seconds.value"
+          :daily="Boolean(dailyDate)"
+          @restart="requestRestart"
           @undo="undo"
-          @new-game="newPuzzle"
+          @new-game="requestNewPuzzle"
         />
+        <p v-if="puzzleNotice" class="board-alert mx-auto mb-4 max-w-[560px] text-center text-sm text-mist-300" role="status">
+          {{ puzzleNotice }}
+        </p>
         <TangoBoard
           :board="board"
           :givens="givens"
@@ -286,6 +364,7 @@ function onCellClick({ r, c }) {
           :constraints="constraints"
           @cell-click="onCellClick"
         />
+        <p class="sr-only" aria-live="polite">{{ moveAnnouncement }}</p>
         <p class="mt-5 text-center">
           <button
             type="button"
@@ -303,6 +382,8 @@ function onCellClick({ r, c }) {
           :difficulty-label="difficultyLabel(difficulty)"
           :moves="moves"
           :seconds="winSeconds"
+          :best-time="bestTime?.seconds ?? null"
+          :is-new-record="isNewRecord"
           @play-again="newPuzzle"
         />
         <p class="mt-5 text-center">

@@ -1,9 +1,8 @@
 // Generador de puzzles Tango.
 // Estrategia: solución válida aleatoria (backtracking) → restricciones =/×
 // coherentes con ella → pistas (givens) según dificultad.
-// La unicidad es best-effort: se intenta con un solver limitado y, si no se
-// consigue demostrar, se acepta el puzzle igualmente (sigue siendo válido y
-// el aviso en rojo contra la solución conocida sigue siendo correcto).
+// Se intenta mantener la dificultad elegida y solo se añaden pistas extra
+// cuando el solver limitado no puede confirmar que el puzzle tenga solución única.
 
 import {
   EMPTY,
@@ -18,10 +17,10 @@ import {
   SOLVER_NODE_LIMIT,
 } from './constants.js'
 
-function shuffled(arr) {
+function shuffled(arr, random = Math.random) {
   const a = arr.slice()
   for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
+    const j = Math.floor(random() * (i + 1))
     ;[a[i], a[j]] = [a[j], a[i]]
   }
   return a
@@ -96,7 +95,7 @@ function buildAdjMap(constraints) {
 }
 
 /** Solución completa válida y aleatoria. */
-export function generateSolution(size) {
+export function generateSolution(size, random = Math.random) {
   const half = size / 2
   for (let restart = 0; restart < 8; restart++) {
     const board = emptyBoard(size)
@@ -104,7 +103,7 @@ export function generateSolution(size) {
       if (idx === size * size) return true
       const r = Math.floor(idx / size)
       const c = idx % size
-      for (const val of shuffled([SUN, MOON])) {
+      for (const val of shuffled([SUN, MOON], random)) {
         if (!isValidPlacement(board, size, half, r, c, val)) continue
         board[r][c] = val
         if (solve(idx + 1)) return true
@@ -129,8 +128,8 @@ function adjacentPairs(size) {
 }
 
 /** Restricciones =/× coherentes con la solución dada. */
-export function generateConstraints(solution, size, count) {
-  const pairs = shuffled(adjacentPairs(size))
+export function generateConstraints(solution, size, count, random = Math.random) {
+  const pairs = shuffled(adjacentPairs(size), random)
   return pairs.slice(0, count).map((p) => ({
     ...p,
     type: solution[p.r1][p.c1] === solution[p.r2][p.c2] ? '=' : 'x',
@@ -180,13 +179,13 @@ export function countSolutions(initialBoard, constraints, limit = 2, nodeLimit =
   return { count, overLimit }
 }
 
-function pickGivens(solution, size, givensCount, constraints) {
+function pickGivens(solution, size, givensCount, constraints, random = Math.random) {
   const total = size * size
   const attempts = size >= 8 ? MAX_UNIQUENESS_ATTEMPTS_LARGE : MAX_UNIQUENESS_ATTEMPTS
   let fallback = null
 
   for (let a = 0; a < attempts; a++) {
-    const idx = shuffled(Array.from({ length: total }, (_, i) => i)).slice(0, givensCount)
+    const idx = shuffled(Array.from({ length: total }, (_, i) => i), random).slice(0, givensCount)
     const keep = new Set(idx)
     const initial = emptyBoard(size)
     const givens = Array.from({ length: size }, () => Array(size).fill(false))
@@ -200,22 +199,51 @@ function pickGivens(solution, size, givensCount, constraints) {
     }
     if (!fallback) fallback = { initial, givens }
     const { count, overLimit } = countSolutions(initial, constraints, 2)
-    if (!overLimit && count === 1) return { initial, givens, unique: true }
+    if (!overLimit && count === 1) return { initial, givens, unique: true, extraGivens: 0 }
   }
-  return { ...fallback, unique: false }
+
+  const initial = cloneBoard(fallback.initial)
+  const givens = fallback.givens.map((row) => row.slice())
+  const remaining = shuffled(
+    Array.from({ length: total }, (_, index) => index).filter((index) => {
+      const r = Math.floor(index / size)
+      const c = index % size
+      return !givens[r][c]
+    }),
+    random,
+  )
+  let extraGivens = 0
+
+  for (let offset = 0; offset < remaining.length; offset += 2) {
+    for (const index of remaining.slice(offset, offset + 2)) {
+      const r = Math.floor(index / size)
+      const c = index % size
+      initial[r][c] = solution[r][c]
+      givens[r][c] = true
+      extraGivens++
+    }
+    const { count, overLimit } = countSolutions(initial, constraints, 2)
+    if (!overLimit && count === 1) {
+      return { initial, givens, unique: true, extraGivens }
+    }
+  }
+
+  // A full set of givens has exactly one completion; this is a safe last resort.
+  return { initial, givens, unique: true, extraGivens }
 }
 
 /** Puzzle completo listo para jugar. */
-export function generatePuzzle(size, difficultyId) {
+export function generatePuzzle(size, difficultyId, random = Math.random) {
   const safeSize = SIZES.includes(size) ? size : 6
   const safeDifficulty = DIFFICULTIES.some((d) => d.id === difficultyId) ? difficultyId : 'media'
-  const solution = generateSolution(safeSize)
-  const constraints = generateConstraints(solution, safeSize, constraintsFor(safeSize))
-  const { initial, givens, unique } = pickGivens(
+  const solution = generateSolution(safeSize, random)
+  const constraints = generateConstraints(solution, safeSize, constraintsFor(safeSize), random)
+  const { initial, givens, unique, extraGivens } = pickGivens(
     solution,
     safeSize,
     givensFor(safeSize, safeDifficulty),
     constraints,
+    random,
   )
   return {
     size: safeSize,
@@ -225,5 +253,6 @@ export function generatePuzzle(size, difficultyId) {
     initialBoard: initial,
     constraints,
     unique,
+    extraGivens,
   }
 }

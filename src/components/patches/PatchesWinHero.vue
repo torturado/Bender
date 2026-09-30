@@ -5,6 +5,8 @@ defineProps({
   difficulty: { type: String, required: true },
   moves: { type: Number, default: 0 },
   seconds: { type: Number, default: 0 },
+  bestTime: { type: Number, default: null },
+  isNewRecord: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['play-again'])
@@ -20,6 +22,9 @@ function formatTime(s) {
   <section
     class="mx-auto w-full max-w-[440px] rounded-lg border-2 border-(--game-patches-border) bg-(--game-patches) p-8 text-center text-white shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
   >
+    <p class="sr-only" role="status" aria-live="polite">
+      Patches completado. Dificultad {{ difficultyLabel(difficulty) }}, {{ moves }} movimientos en {{ formatTime(seconds) }}.
+    </p>
     <p class="mb-2 inline-block rounded bg-ink-950 px-2.5 py-0.5 text-[0.72rem] font-bold tracking-wider text-mist-100 uppercase">
       Patches completado
     </p>
@@ -28,6 +33,8 @@ function formatTime(s) {
     <p class="m-0 mb-6 text-sm opacity-90">
       {{ moves }} movimiento{{ moves === 1 ? '' : 's' }} · {{ formatTime(seconds) }}
     </p>
+    <p v-if="isNewRecord" class="-mt-4 mb-2 text-sm font-extrabold">¡Nuevo récord personal!</p>
+    <p v-if="bestTime !== null" class="mb-6 text-sm opacity-90">Mejor tiempo: {{ formatTime(bestTime) }}</p>
     <button
       type="button"
       class="rounded-md border border-orange-300 bg-orange-500 px-6 py-3 text-base font-extrabold text-on-accent transition hover:bg-orange-400"

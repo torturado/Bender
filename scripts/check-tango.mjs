@@ -2,12 +2,12 @@
 // comprueba que la lógica sigue intacta (ciclo de la celda, reglas,
 // victoria) y que los iconos miden lo que deben.
 import { chromium } from 'playwright-core'
+import { BASE, CHROMIUM_EXECUTABLE } from './browser.js'
 
-const BASE = process.env.BASE ?? 'http://localhost:5173'
 const fails = []
 const ok = (n, c, d = '') => { console.log(`  ${c ? 'ok  ' : 'FAIL'} ${n}  ${d}`); if (!c) fails.push(n) }
 
-const b = await chromium.launch({ executablePath: `${process.env.HOME}/.local/bin/google-chrome-stable` })
+const b = await chromium.launch({ executablePath: CHROMIUM_EXECUTABLE })
 const p = await b.newPage({ viewport: { width: 900, height: 900 } })
 const errors = []
 p.on('pageerror', (e) => errors.push(String(e)))
@@ -127,7 +127,7 @@ ok('se puede marcar una celda en error', err.found, JSON.stringify(err))
 ok('la celda lleva la clase de error', err.hasErrorClass === true, String(err.hasErrorClass))
 ok('el borde cambia respecto a una celda normal', err.border !== err.borderNormal, `${err.border} vs ${err.borderNormal}`)
 ok('y lleva el anillo rojo', err.ring === true, String(err.ring))
-ok('el aria-label avisa del error', /mal colocada/.test(err.label ?? ''), err.label)
+ok('el aria-label avisa del error', /incumple una regla/.test(err.label ?? ''), err.label)
 ok('el ✕ es legible (>8% de la celda)', err.xRatio > 0.08, `${(err.xRatio * 100).toFixed(0)}% (${err.xSize}px)`)
 
 console.log('\n5. Accesibilidad de los iconos')

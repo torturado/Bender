@@ -1,6 +1,6 @@
 <script setup>
-import { computed } from 'vue'
-import { SUN, MOON } from '../../games/tango/constants.js'
+import { computed, onMounted, ref } from 'vue'
+import { EMPTY, SUN, MOON } from '../../games/tango/constants.js'
 
 const props = defineProps({
   board: { type: Array, required: true },
@@ -13,6 +13,16 @@ const emit = defineEmits(['cell-click'])
 
 const size = computed(() => props.board.length)
 const half = computed(() => props.board.length / 2)
+const activeCell = ref(null)
+
+const firstEditableCell = computed(() => {
+  for (let r = 0; r < size.value; r++) {
+    for (let c = 0; c < size.value; c++) {
+      if (!props.givens?.[r]?.[c]) return { r, c }
+    }
+  }
+  return { r: 0, c: 0 }
+})
 
 /** Mapa "r,c" → { right: '='|'x'|null, down: '='|'x'|null } para pintar =/× en el borde. */
 const edgeMap = computed(() => {
@@ -39,8 +49,58 @@ const edgeMap = computed(() => {
 const isError = (r, c) => props.errorKeys.has(`${r},${c}`)
 const isGiven = (r, c) => !!props.givens?.[r]?.[c]
 
+onMounted(() => {
+  document.querySelector('[data-tango-cell][tabindex="0"]')?.focus({ preventScroll: true })
+})
+
+function cellLabel(r, c) {
+  const value = props.board[r][c]
+  const state = value === EMPTY ? 'vacía' : value === SUN ? 'sol' : 'luna'
+  const fixed = isGiven(r, c) ? ', pista fija' : ''
+  const error = isError(r, c) ? ', incumple una regla' : ''
+  const relatedConstraints = props.constraints
+    .flatMap((constraint) => {
+      const endpoints = [
+        [constraint.r1, constraint.c1, constraint.r2, constraint.c2],
+        [constraint.r2, constraint.c2, constraint.r1, constraint.c1],
+      ]
+      return endpoints
+        .filter(([cellR, cellC]) => cellR === r && cellC === c)
+        .map(([, , otherR, otherC]) =>
+          `${constraint.type === '=' ? 'igual' : 'distinta'} a fila ${otherR + 1}, columna ${otherC + 1}`,
+        )
+    })
+  const relations = relatedConstraints.length
+    ? `, ${relatedConstraints.join(', ')}`
+    : ''
+  return `Fila ${r + 1}, columna ${c + 1}: ${state}${fixed}${error}${relations}`
+}
+
 function onCell(r, c) {
+  activeCell.value = { r, c }
   emit('cell-click', { r, c })
+}
+
+function onGridKeydown(event, r, c) {
+  const movement = {
+    ArrowUp: [-1, 0],
+    ArrowDown: [1, 0],
+    ArrowLeft: [0, -1],
+    ArrowRight: [0, 1],
+  }[event.key]
+  if (!movement) return
+  event.preventDefault()
+
+  let nextR = r + movement[0]
+  let nextC = c + movement[1]
+  while (nextR >= 0 && nextR < size.value && nextC >= 0 && nextC < size.value) {
+    if (!isGiven(nextR, nextC)) {
+      document.querySelector(`[data-tango-cell="${nextR},${nextC}"]`)?.focus()
+      return
+    }
+    nextR += movement[0]
+    nextC += movement[1]
+  }
 }
 </script>
 
@@ -62,22 +122,28 @@ function onCell(r, c) {
           d="M20.6 14.6A8.9 8.9 0 1 1 9.4 3.4a7.2 7.2 0 0 0 11.2 11.2Z"
         />
       </svg>
-      . Pulsa una casilla: vacío → sol → luna.
+      . Pulsa una casilla: vacío → sol → luna. = indica iguales y ×, distintas.
     </p>
 
     <div
-      class="grid gap-1.5"
+      class="grid gap-1.5 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-orange-400"
       :style="{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }"
       role="grid"
       aria-label="Tablero de Tango"
+      :aria-rowcount="size"
+      :aria-colcount="size"
     >
-      <template v-for="r in size" :key="'row-' + r">
+      <div v-for="r in size" :key="'row-' + r" class="contents" role="row">
         <button
           v-for="c in size"
           :key="'cell-' + r + '-' + c"
           type="button"
           role="gridcell"
-            :aria-label="`Fila ${r}, columna ${c}${isError(r - 1, c - 1) ? ', mal colocada' : ''}`"
+          :data-tango-cell="`${r - 1},${c - 1}`"
+          :aria-label="cellLabel(r - 1, c - 1)"
+          :aria-rowindex="r"
+          :aria-colindex="c"
+          :tabindex="(activeCell?.r === r - 1 && activeCell?.c === c - 1) || (!activeCell && firstEditableCell.r === r - 1 && firstEditableCell.c === c - 1) ? 0 : -1"
             :disabled="isGiven(r - 1, c - 1)"
             :class="[
               'board-cell relative flex aspect-square items-center justify-center rounded-md border transition select-none',
@@ -88,6 +154,8 @@ function onCell(r, c) {
                 : 'border-ink-500 bg-ink-900 hover:border-orange-400',
           ]"
           @click="onCell(r - 1, c - 1)"
+          @focus="activeCell = { r: r - 1, c: c - 1 }"
+          @keydown="onGridKeydown($event, r - 1, c - 1)"
         >
             <svg
               v-if="board[r - 1][c - 1] === SUN"
@@ -152,7 +220,7 @@ function onCell(r, c) {
             </svg>
           </span>
         </button>
-      </template>
+      </div>
     </div>
   </div>
 </template>

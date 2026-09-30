@@ -22,19 +22,19 @@ function emptyCells(board) {
 }
 
 /** Coloca un 2 (90 %) o un 4 (10 %) en una vacía aleatoria. Mutación + devuelve [r, c] o null. */
-export function spawnTile(board, fourProb = SPAWN_FOUR_PROB) {
+export function spawnTile(board, fourProb = SPAWN_FOUR_PROB, random = Math.random) {
   const cells = emptyCells(board)
   if (cells.length === 0) return null
-  const [r, c] = cells[Math.floor(Math.random() * cells.length)]
-  board[r][c] = Math.random() < fourProb ? 4 : 2
+  const [r, c] = cells[Math.floor(random() * cells.length)]
+  board[r][c] = random() < fourProb ? 4 : 2
   return [r, c]
 }
 
 /** Partida nueva: tablero vacío + 2 fichas. */
-export function newGame() {
+export function newGame(random = Math.random) {
   const board = emptyBoard()
-  spawnTile(board)
-  spawnTile(board)
+  spawnTile(board, SPAWN_FOUR_PROB, random)
+  spawnTile(board, SPAWN_FOUR_PROB, random)
   return board
 }
 
