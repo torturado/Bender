@@ -1,13 +1,13 @@
 // El cambio a SVG es de presentación, pero toca el template del tablero:
 // comprueba que la lógica sigue intacta (ciclo de la celda, reglas,
 // victoria) y que los iconos miden lo que deben.
-import { chromium } from 'playwright-core'
+import { launchBrowser } from './browser.mjs'
 
 const BASE = process.env.BASE ?? 'http://localhost:5173'
 const fails = []
 const ok = (n, c, d = '') => { console.log(`  ${c ? 'ok  ' : 'FAIL'} ${n}  ${d}`); if (!c) fails.push(n) }
 
-const b = await chromium.launch({ executablePath: `${process.env.HOME}/.local/bin/google-chrome-stable` })
+const b = await launchBrowser()
 const p = await b.newPage({ viewport: { width: 900, height: 900 } })
 const errors = []
 p.on('pageerror', (e) => errors.push(String(e)))

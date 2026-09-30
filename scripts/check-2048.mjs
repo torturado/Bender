@@ -1,6 +1,6 @@
 // Regresión del motor y de la capa visual animada del 2048.
 // El bloque de navegador espera el dev server en BASE (por defecto :5173).
-import { chromium } from 'playwright-core'
+import { launchBrowser } from './browser.mjs'
 import {
   boardsEqual,
   cloneBoard,
@@ -154,9 +154,7 @@ ok('las fichas visuales quedan ordenadas por id', idsOrdered, randomFailure)
 ok('la secuencia aleatoria cubre fusiones', mergeCount > 0, String(mergeCount))
 
 console.log('\n3. Navegador: geometría y movimiento')
-const browser = await chromium.launch({
-  executablePath: `${process.env.HOME}/.local/bin/google-chrome-stable`,
-})
+const browser = await launchBrowser()
 const page = await browser.newPage({ viewport: { width: 390, height: 780 } })
 const errors = []
 page.on('pageerror', (error) => errors.push(String(error)))

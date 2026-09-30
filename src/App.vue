@@ -1,23 +1,19 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Capacitor } from '@capacitor/core'
 import { App as CapacitorApp } from '@capacitor/app'
 import Navbar from './components/Navbar.vue'
+import { hasSavedGameForRoute } from './games/gameStorage.js'
 
 const PROTECTED_ROUTES = new Set(['tango', 'buscaminas', 'patches', 'juego-2048'])
-const SAVE_KEYS = {
-  tango: 'bender.tango.save.v1',
-  buscaminas: 'bender.buscaminas.save.v1',
-  patches: 'bender.patches.save.v1',
-  'juego-2048': 'bender.2048.save.v1',
-}
 
 const route = useRoute()
 const router = useRouter()
 const exitDialogOpen = ref(false)
 const pendingExitTarget = ref(null)
 const continueButton = ref(null)
+const mobileNavigationOpen = ref(false)
 const isProtectedRoute = computed(() => PROTECTED_ROUTES.has(route.name))
 
 // Dirección de la transición de vista: home es el nivel 0 y los juegos
@@ -45,13 +41,22 @@ function setAppInert(inert) {
 }
 
 function hasSavedGame(routeName) {
-  const key = SAVE_KEYS[routeName]
-  if (!key) return false
-  try {
-    return Boolean(localStorage.getItem(key))
-  } catch {
-    return false
-  }
+  return hasSavedGameForRoute(routeName)
+}
+
+watch(
+  () => route.meta.title,
+  (title) => {
+    document.title = title ? `${title} | Bender Juegos` : 'Bender Juegos'
+  },
+  { immediate: true },
+)
+
+function focusPageHeading() {
+  const target =
+    document.querySelector('#main-content h1[tabindex="-1"]') ??
+    document.querySelector('#main-content')
+  target?.focus({ preventScroll: true })
 }
 
 function setDialogPageState(open) {
@@ -91,6 +96,26 @@ async function confirmExit() {
   } catch {
     allowNextNavigation = false
     await openExitDialog(target)
+  }
+}
+
+function onExitDialogKeydown(event) {
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    closeExitDialog()
+    return
+  }
+  if (event.key !== 'Tab') return
+
+  const buttons = event.currentTarget.querySelectorAll('button:not([disabled])')
+  const first = buttons[0]
+  const last = buttons[buttons.length - 1]
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault()
+    last?.focus()
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault()
+    first?.focus()
   }
 }
 
@@ -160,11 +185,12 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="flex min-h-screen">
-    <Navbar />
+    <a class="skip-link" href="#main-content">Saltar al contenido</a>
+    <Navbar @mobile-open-change="mobileNavigationOpen = $event" />
 
-    <div class="flex min-w-0 flex-1 flex-col pt-14 md:pt-0">
+    <div class="flex min-w-0 flex-1 flex-col pt-14 md:pt-0" :inert="mobileNavigationOpen">
       <RouterView v-slot="{ Component }">
-        <Transition :name="pageTransition" mode="out-in">
+        <Transition :name="pageTransition" mode="out-in" @after-enter="focusPageHeading">
           <component :is="Component" :key="route.name" />
         </Transition>
       </RouterView>
@@ -177,7 +203,7 @@ onBeforeUnmount(() => {
         v-if="exitDialogOpen"
         class="fixed inset-0 z-[100] flex items-center justify-center bg-ink/40 px-4 py-6"
         @click.self="closeExitDialog"
-        @keydown.esc.stop.prevent="closeExitDialog"
+        @keydown="onExitDialogKeydown"
       >
         <section
           class="game-dialog-panel surface-card w-full max-w-md text-center"
