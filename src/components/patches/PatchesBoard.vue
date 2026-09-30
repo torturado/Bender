@@ -244,10 +244,10 @@ function shapeIcon(shape) {
 <template>
   <div class="game-board-frame patches-board-frame mx-auto">
     <div class="rounded-lg bg-ink-900 ring-1 ring-ink-500">
-    <div class="relative">
       <p class="mb-3 text-center text-sm text-mist-400">
         Arrastra para dibujar. Con teclado, enfoca el tablero, usa las flechas y pulsa Intro en cada extremo.
       </p>
+      <div class="relative">
       <!-- Base: casillas vacías + feedback del dibujo -->
       <div
         ref="boardGrid"
