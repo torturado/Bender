@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
+import { computed, nextTick, ref, shallowRef } from 'vue'
 import BuscaminasSetupMenu from '../components/buscaminas/BuscaminasSetupMenu.vue'
 import BuscaminasBoard from '../components/buscaminas/BuscaminasBoard.vue'
 import BuscaminasToolbar from '../components/buscaminas/BuscaminasToolbar.vue'
@@ -29,6 +29,7 @@ import {
 import { GAME_SAVE_KEYS } from '../games/gameStorage.js'
 import { getTimeRecord, saveTimeRecord } from '../games/gameRecords.js'
 import { useElapsedTime } from '../composables/useElapsedTime.js'
+import { useGamePersistence } from '../composables/useGamePersistence.js'
 
 const SAVE_KEY = GAME_SAVE_KEYS.buscaminas
 
@@ -158,7 +159,7 @@ function restoreGame() {
   }
 }
 
-watch(
+useGamePersistence(
   [
     status,
     size,
@@ -173,11 +174,9 @@ watch(
     startTime,
   ],
   updateSavedGame,
-  { deep: true },
 )
 
 restoreGame()
-onBeforeUnmount(updateSavedGame)
 
 const flagsLeft = computed(() => mineTotal.value - countFlags(flagged.value))
 const lostWrongFlags = computed(() =>

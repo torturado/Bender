@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onUnmounted, ref, shallowRef, watch } from 'vue'
+import { computed, onUnmounted, ref, shallowRef } from 'vue'
 import PatchesBoard from '../components/patches/PatchesBoard.vue'
 import PatchesToolbar from '../components/patches/PatchesToolbar.vue'
 import PatchesWinHero from '../components/patches/PatchesWinHero.vue'
@@ -9,10 +9,12 @@ import GameIcon from '../components/GameIcon.vue'
 import BackLink from '../components/BackLink.vue'
 import { DIFFICULTIES, SHAPES, SIZE } from '../games/patches/constants.js'
 import { generatePuzzle } from '../games/patches/generator.js'
+import { findSolution } from '../games/patches/solver.js'
 import { checkWin, coversBoard, rectsOverlap } from '../games/patches/validators.js'
 import { GAME_SAVE_KEYS } from '../games/gameStorage.js'
 import { getTimeRecord, saveTimeRecord } from '../games/gameRecords.js'
-import { formatDuration, useElapsedTime } from '../composables/useElapsedTime.js'
+import { useElapsedTime } from '../composables/useElapsedTime.js'
+import { useGamePersistence } from '../composables/useGamePersistence.js'
 
 const SAVE_KEY = GAME_SAVE_KEYS.patches
 
@@ -20,7 +22,7 @@ const status = ref('setup') // setup | playing | won
 const setupDifficulty = ref('media')
 const difficulty = ref('media')
 const clues = ref([])
-const solution = ref(null)
+const boardVersion = ref(0)
 const patches = ref([]) // [{ id, r1, c1, r2, c2 }]
 const history = ref([]) // [{ type: 'add' | 'delete', patch }]
 const moves = ref(0)
@@ -88,8 +90,6 @@ function isValidSave(data) {
     Array.isArray(data.clues) &&
     data.clues.length > 0 &&
     data.clues.every(isValidClue) &&
-    (data.solution === undefined ||
-      (Array.isArray(data.solution) && data.solution.every(isValidRect))) &&
     Array.isArray(data.patches) &&
     data.patches.every(isValidPatch) &&
     Array.isArray(data.history) &&
@@ -118,7 +118,6 @@ function saveGame() {
         version: 1,
         difficulty: difficulty.value,
         clues: clues.value,
-        solution: solution.value,
         patches: patches.value,
         history: history.value,
         nextId,
@@ -150,7 +149,6 @@ function restoreGame() {
     difficulty.value = data.difficulty
     bestRecord.value = getTimeRecord('patches', data.difficulty)
     clues.value = data.clues
-    solution.value = Array.isArray(data.solution) ? data.solution : null
     patches.value = data.patches
     history.value = data.history
     nextId = data.nextId
@@ -165,14 +163,12 @@ function restoreGame() {
   }
 }
 
-watch(
+useGamePersistence(
   [status, difficulty, clues, patches, history, moves, startTime],
   updateSavedGame,
-  { deep: true },
 )
 
 restoreGame()
-onBeforeUnmount(updateSavedGame)
 
 function flashNotice(msg) {
   notice.value = msg
@@ -190,7 +186,7 @@ function newGame(difficultyId) {
   const puzzle = generatePuzzle(difficultyId)
   difficulty.value = puzzle.difficulty
   clues.value = puzzle.clues
-  solution.value = puzzle.solution
+  boardVersion.value++
   patches.value = []
   history.value = []
   nextId = 1
@@ -206,6 +202,7 @@ function newGame(difficultyId) {
 function restart() {
   // Reiniciar: vacía el tablero, mismo puzzle y dificultad.
   saveEnabled = true
+  boardVersion.value++
   patches.value = []
   history.value = []
   nextId = 1
@@ -251,17 +248,18 @@ function finishIfWon() {
 }
 
 function useHint() {
-  if (!solution.value) {
-    flashNotice('Esta partida guardada no incluye una pista. La siguiente partida sí la tendrá.')
+  if (status.value !== 'playing') return
+  const result = findSolution(patches.value, clues.value)
+  if (!result.solution) {
+    flashNotice(result.overLimit
+      ? 'No se pudo encontrar una pista ahora. Prueba a colocar otro parche.'
+      : 'No hay una solución compatible con tus parches. Deshaz o elimina alguno antes de pedir una pista.')
     return
   }
-  const candidate = solution.value.find(
+  const candidate = result.solution.find(
     (rect) => !patches.value.some((patch) => rectsOverlap(rect, patch)),
   )
-  if (!candidate) {
-    flashNotice('Deshaz algún parche para poder aplicar una pista.')
-    return
-  }
+  if (!candidate) return
   startTime.value -= 30_000
   onDraw(candidate)
   flashNotice('Pista aplicada. Se añaden 30 segundos al tiempo.')
@@ -366,6 +364,7 @@ onUnmounted(() => {
           @hint="useHint"
         />
         <PatchesBoard
+          :key="boardVersion"
           :clues="clues"
           :patches="patches"
           @draw="onDraw"

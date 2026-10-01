@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
+import { computed, nextTick, ref, shallowRef } from 'vue'
 import TangoSetupMenu from '../components/tango/TangoSetupMenu.vue'
 import TangoBoard from '../components/tango/TangoBoard.vue'
 import TangoToolbar from '../components/tango/TangoToolbar.vue'
@@ -16,10 +16,11 @@ import {
   DIFFICULTIES,
   difficultyLabel,
 } from '../games/tango/constants.js'
-import { generatePuzzle } from '../games/tango/generator.js'
+import { findSolution, generatePuzzle } from '../games/tango/generator.js'
 import { GAME_SAVE_KEYS } from '../games/gameStorage.js'
 import { getTimeRecord, saveTimeRecord } from '../games/gameRecords.js'
-import { formatDuration, useElapsedTime } from '../composables/useElapsedTime.js'
+import { useElapsedTime } from '../composables/useElapsedTime.js'
+import { useGamePersistence } from '../composables/useGamePersistence.js'
 import {
   findRuleViolations,
   isWin,
@@ -184,14 +185,12 @@ function restoreGame() {
   }
 }
 
-watch(
+useGamePersistence(
   [status, size, difficulty, board, solution, givens, constraints, history, moves, startTime],
   updateSavedGame,
-  { deep: true },
 )
 
 restoreGame()
-onBeforeUnmount(updateSavedGame)
 
 const errorKeys = computed(() => {
   if (status.value === 'setup' || board.value.length === 0) return new Set()
@@ -280,26 +279,24 @@ function finishIfWon() {
 
 function useHint() {
   if (status.value !== 'playing') return
-  const existingViolations = findRuleViolations(board.value, constraints.value).cellKeys
+  const result = findSolution(board.value, constraints.value)
+  if (!result.solution) {
+    hintMessage.value = result.overLimit
+      ? 'No se pudo encontrar una pista ahora. Prueba a completar otra casilla.'
+      : 'No hay una solución compatible con tus jugadas. Deshaz o corrige alguna casilla antes de pedir otra pista.'
+    return
+  }
   let target = null
 
   for (let r = 0; r < size.value && !target; r++) {
     for (let c = 0; c < size.value; c++) {
       if (board.value[r][c] !== EMPTY) continue
-      const candidate = clone(board.value)
-      candidate[r][c] = solution.value[r][c]
-      const nextViolations = findRuleViolations(candidate, constraints.value).cellKeys
-      if (![...nextViolations].some((key) => !existingViolations.has(key))) {
-        target = { r, c, value: solution.value[r][c] }
-        break
-      }
+      target = { r, c, value: result.solution[r][c] }
+      break
     }
   }
 
-  if (!target) {
-    hintMessage.value = 'Corrige o deshaz las casillas marcadas antes de pedir otra pista.'
-    return
-  }
+  if (!target) return
 
   const previous = board.value[target.r][target.c]
   board.value[target.r][target.c] = target.value

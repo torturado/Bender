@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, shallowRef } from 'vue'
 import Game2048Board from '../components/juego2048/Game2048Board.vue'
 import Game2048Toolbar from '../components/juego2048/Game2048Toolbar.vue'
 import Game2048Hero from '../components/juego2048/Game2048Hero.vue'
@@ -19,7 +19,8 @@ import {
 import { tilesAfterMove, tilesFromBoard } from '../games/juego2048/tiles.js'
 import { GAME_SAVE_KEYS } from '../games/gameStorage.js'
 import { getBestScore, saveBestScore } from '../games/gameRecords.js'
-import { formatDuration, useElapsedTime } from '../composables/useElapsedTime.js'
+import { useElapsedTime } from '../composables/useElapsedTime.js'
+import { useGamePersistence } from '../composables/useGamePersistence.js'
 
 const SAVE_KEY = GAME_SAVE_KEYS['2048']
 const END_STATUS_DELAY = 700
@@ -180,7 +181,7 @@ function restoreGame() {
   }
 }
 
-watch([status, board, score, moves, history, hasUndone, startTime], updateSavedGame, { deep: true })
+useGamePersistence([status, board, score, moves, history, hasUndone, startTime], updateSavedGame)
 
 restoreGame()
 
@@ -278,10 +279,7 @@ function focusBoardOnEntry() {
   if (isActiveStatus(shownStatus.value)) boardRef.value?.focus()
 }
 
-onBeforeUnmount(() => {
-  clearStatusTimer()
-  updateSavedGame()
-})
+onBeforeUnmount(clearStatusTimer)
 </script>
 
 <template>

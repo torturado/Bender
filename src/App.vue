@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, provide, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Capacitor } from '@capacitor/core'
 import { App as CapacitorApp } from '@capacitor/app'
@@ -14,6 +14,8 @@ const exitDialogOpen = ref(false)
 const pendingExitTarget = ref(null)
 const continueButton = ref(null)
 const mobileNavigationOpen = ref(false)
+const cancelGameConfirmation = shallowRef(null)
+provide('cancel-game-confirmation', cancelGameConfirmation)
 const isProtectedRoute = computed(() => PROTECTED_ROUTES.has(route.name))
 
 // Dirección de la transición de vista: home es el nivel 0 y los juegos
@@ -120,6 +122,10 @@ function onExitDialogKeydown(event) {
 }
 
 const removeNavigationGuard = router.beforeEach((to, from) => {
+  if (cancelGameConfirmation.value) {
+    cancelGameConfirmation.value()
+    return false
+  }
   const fromDepth = depthOf(from.name)
   const toDepth = depthOf(to.name)
   pageTransition.value =
@@ -148,6 +154,10 @@ const removeNavigationGuard = router.beforeEach((to, from) => {
 })
 
 async function handleNativeBack() {
+  if (cancelGameConfirmation.value) {
+    cancelGameConfirmation.value()
+    return
+  }
   if (exitDialogOpen.value) {
     await closeExitDialog()
     return
@@ -191,7 +201,9 @@ onBeforeUnmount(() => {
     <div class="flex min-w-0 flex-1 flex-col pt-14 md:pt-0" :inert="mobileNavigationOpen">
       <RouterView v-slot="{ Component }">
         <Transition :name="pageTransition" mode="out-in" @after-enter="focusPageHeading">
-          <component :is="Component" :key="route.name" />
+          <div :key="route.name" class="min-w-0 flex-1">
+            <component :is="Component" />
+          </div>
         </Transition>
       </RouterView>
     </div>
